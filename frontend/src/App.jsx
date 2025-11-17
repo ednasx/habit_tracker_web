@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Navbar from './components/layout/Navbar'
+import HabitForm from './components/HabitForm'
 import { getHabits } from './services/habitsApi'
 
 function App() {
@@ -14,7 +15,6 @@ function App() {
         setError(null)
 
         const data = await getHabits()
-        // Expecting an array from backend, e.g. [{ id, name, description }]
         setHabits(Array.isArray(data) ? data : [])
       } catch (err) {
         console.error(err)
@@ -27,45 +27,101 @@ function App() {
     fetchHabits()
   }, [])
 
+  function handleHabitCreated(newHabit) {
+    // Prepend the new habit to the list
+    setHabits((prev) => [newHabit, ...prev])
+  }
+
   return (
-    <div>
+    <div className="d-flex flex-column min-vh-100">
       <Navbar />
-      <main style={{ padding: '1rem' }}>
-        <h1>Habit Tracker Dashboard</h1>
-        <p style={{ color: '#666', marginBottom: '1rem' }}>
-          This page shows your habits fetched from the backend API.
-        </p>
 
-        {loading && <p>Loading habits...</p>}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+      <main className="flex-grow-1 py-4">
+        <div className="container">
+          {/* Heading area */}
+          <div className="row mb-4">
+            <div className="col-12 col-lg-8">
+              <h1 className="h3 fw-bold mb-1">Dashboard</h1>
+              <p className="text-muted mb-0">
+                Track your daily habits, stay consistent, and watch your streaks grow.
+              </p>
+            </div>
+          </div>
 
-        {!loading && !error && habits.length === 0 && (
-          <p>No habits found yet. Try adding some via the backend.</p>
-        )}
+          {/* Create habit form */}
+          <HabitForm onHabitCreated={handleHabitCreated} />
 
-        {!loading && !error && habits.length > 0 && (
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {habits.map((habit) => (
-              <li
-                key={habit.id}
-                style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '0.75rem',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                <strong>{habit.name}</strong>
-                {habit.description && (
-                  <div style={{ fontSize: '0.9rem', color: '#555', marginTop: '0.25rem' }}>
-                    {habit.description}
+          {/* Status / alerts */}
+          {loading && (
+            <div className="alert alert-info" role="alert">
+              Loading habits...
+            </div>
+          )}
+
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
+
+          {/* Habits list */}
+          {!loading && !error && (
+            <>
+              {habits.length === 0 ? (
+                <div className="card border-0 shadow-sm">
+                  <div className="card-body text-center py-5">
+                    <h2 className="h5 mb-2">No habits yet</h2>
+                    <p className="text-muted mb-3">
+                      Use the form above to create your first habit.
+                    </p>
+                    <p className="small text-muted mb-0">
+                      Backend endpoint expected: <code>GET /api/habits</code>,{' '}
+                      <code>POST /api/habits</code>
+                    </p>
                   </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+                </div>
+              ) : (
+                <div className="row g-3">
+                  {habits.map((habit) => (
+                    <div className="col-12 col-md-6 col-lg-4" key={habit.id}>
+                      <div className="card h-100 border-0 shadow-sm habit-card">
+                        <div className="card-body">
+                          <h2 className="h5 mb-1">{habit.name}</h2>
+                          {habit.description && (
+                            <p className="text-muted small mb-3">
+                              {habit.description}
+                            </p>
+                          )}
+
+                          {/* Placeholder for future stats */}
+                          <div className="d-flex justify-content-between align-items-center">
+                            <span className="badge bg-primary-subtle text-primary-emphasis">
+                              Streak: 0 days
+                            </span>
+                            <span className="text-muted small">Logs: 0</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </main>
+
+      {/* Simple footer */}
+      <footer className="py-3 mt-auto border-top bg-white">
+        <div className="container d-flex justify-content-between align-items-center">
+          <span className="text-muted small">
+            Design of Dynamic Web Systems — Team Habit Tracker
+          </span>
+          <span className="text-muted small d-none d-sm-inline">
+            Frontend: React &amp; Bootstrap
+          </span>
+        </div>
+      </footer>
     </div>
   )
 }
