@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { publishHabitCreatedEvent } from '../messaging/rabbitmq.js'
 
 const router = Router()
 
@@ -29,6 +30,15 @@ router.post('/', (req, res) => {
   }
 
   habits.push(newHabit)
+
+  // Fire-and-forget event for other services (analytics, notifications, etc.)
+  publishHabitCreatedEvent({
+    id: newHabit.id,
+    name: newHabit.name,
+    description: newHabit.description,
+    userId: req.user?.id ?? null, // will be real when auth is wired
+    createdAt: new Date().toISOString(),
+  })
 
   res.status(201).json(newHabit)
 })
