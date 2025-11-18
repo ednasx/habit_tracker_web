@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: habit-frontend
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: habit-frontend
+  ports:
+    - port: 80
+      targetPort: {{ .Values.frontend.port }}
+      protocol: TCP

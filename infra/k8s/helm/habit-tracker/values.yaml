@@ -1,0 +1,9 @@
+namespace: habit-dev
+
+frontend:
+  image: your-docker-registry/habit-frontend:latest
+  port: 5173
+
+backend:
+  image: your-docker-registry/habit-backend:latest
+  port: 4000

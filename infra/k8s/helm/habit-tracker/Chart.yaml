@@ -1,0 +1,5 @@
+apiVersion: v2
+name: habit-tracker
+description: Habit Tracker full-stack application (frontend + backend)
+version: 0.1.0
+appVersion: "0.1.0"
