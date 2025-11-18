@@ -1,5 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api'
 
+let authToken = null
+
+export function setAuthToken(token) {
+  authToken = token || null
+}
+
 /**
  * Generic helper to call the backend API.
  *
@@ -12,19 +18,23 @@ export async function apiRequest(path, options = {}) {
 
   const defaultHeaders = {
     'Content-Type': 'application/json',
-    // Later you can add Authorization: `Bearer ${token}` here
+  }
+
+  const headers = {
+    ...defaultHeaders,
+    ...(options.headers || {}),
+  }
+
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`
   }
 
   const response = await fetch(url, {
-    headers: {
-      ...defaultHeaders,
-      ...(options.headers || {}),
-    },
     ...options,
+    headers,
   })
 
   if (!response.ok) {
-    // Try to get error message from backend if it sends JSON
     let detail = ''
     try {
       const data = await response.json()
@@ -38,6 +48,5 @@ export async function apiRequest(path, options = {}) {
     throw new Error(`API error: ${response.status} ${response.statusText}${detail}`)
   }
 
-  // Assuming JSON response for all endpoints
   return response.json()
 }
