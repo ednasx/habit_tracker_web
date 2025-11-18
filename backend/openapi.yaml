@@ -1,0 +1,113 @@
+openapi: 3.0.0
+info:
+  title: Habit Tracker API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:4000/api
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+
+  /habits:
+    get:
+      summary: List habits for current user
+      responses:
+        '200':
+          description: List of habits
+    post:
+      summary: Create a new habit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Habit created
+
+  /habits/{id}:
+    get:
+      summary: Get a single habit
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Habit details
+        '404':
+          description: Not found
+    put:
+      summary: Update a habit
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Habit updated
+    delete:
+      summary: Delete a habit
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted
+
+  /habits/{id}/logs:
+    post:
+      summary: Log habit completion for a date
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                  format: date
+                value:
+                  type: integer
+      responses:
+        '201':
+          description: Completion logged
