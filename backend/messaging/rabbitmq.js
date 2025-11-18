@@ -1,50 +1,61 @@
 import amqplib from 'amqplib'
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672'
-const HABIT_EXCHANGE = process.env.RABBITMQ_HABIT_EXCHANGE || 'habit.events'
-const HABIT_QUEUE = process.env.RABBITMQ_HABIT_QUEUE || 'habit.events.created'
+const EXCHANGE_NAME = process.env.RABBITMQ_HABIT_EXCHANGE || 'habit.events'
 
-let channelPromise = null
+let connection = null
+let channel = null
 
-async function getChannel() {
-  if (!channelPromise) {
-    channelPromise = (async () => {
-      const connection = await amqplib.connect(RABBITMQ_URL)
-      const channel = await connection.createChannel()
+async function connectRabbitMQ() {
+  try {
+    connection = await amqplib.connect(RABBITMQ_URL)
+    channel = await connection.createChannel()
 
-      // Topic exchange for habit events
-      await channel.assertExchange(HABIT_EXCHANGE, 'topic', { durable: true })
-
-      // Queue for habit.created events
-      await channel.assertQueue(HABIT_QUEUE, { durable: true })
-      await channel.bindQueue(HABIT_QUEUE, HABIT_EXCHANGE, 'habit.created')
-
-      console.log('[RabbitMQ] Connected and exchange/queue configured')
-      return channel
-    })().catch((err) => {
-      console.error('[RabbitMQ] Initial RabbitMQ connection failed:', err.message)
-      channelPromise = null
-      throw err
+    await channel.assertExchange(EXCHANGE_NAME, 'topic', {
+      durable: true,
     })
-  }
 
-  return channelPromise
+    console.log('[RabbitMQ] Connected and exchange asserted:', EXCHANGE_NAME)
+  } catch (err) {
+    console.error('[RabbitMQ] Initial RabbitMQ connection failed:', err.message)
+    connection = null
+    channel = null
+  }
 }
 
-/**
- * Publish a habit.created event.
- * This is fire-and-forget: if RabbitMQ is down, we log and continue.
- */
-export async function publishHabitCreatedEvent(habit) {
-  try {
-    const channel = await getChannel()
-    const payload = Buffer.from(JSON.stringify(habit))
+// Try to connect on module load (non-fatal if it fails)
+connectRabbitMQ().catch((err) => {
+  console.error('[RabbitMQ] connectRabbitMQ threw:', err.message)
+})
 
-    channel.publish(HABIT_EXCHANGE, 'habit.created', payload, {
-      contentType: 'application/json',
+export async function publishHabitCreatedEvent(event) {
+  if (!channel) {
+    console.warn('[RabbitMQ] Channel not ready, cannot publish habit.created event')
+    return
+  }
+
+  try {
+    const payload = Buffer.from(JSON.stringify(event))
+    await channel.publish(EXCHANGE_NAME, 'habit.created', payload, {
       persistent: true,
     })
   } catch (err) {
     console.error('[RabbitMQ] Failed to publish habit.created event:', err.message)
+  }
+}
+
+export async function publishHabitCompletedEvent(event) {
+  if (!channel) {
+    console.warn('[RabbitMQ] Channel not ready, cannot publish habit.completed event')
+    return
+  }
+
+  try {
+    const payload = Buffer.from(JSON.stringify(event))
+    await channel.publish(EXCHANGE_NAME, 'habit.completed', payload, {
+      persistent: true,
+    })
+  } catch (err) {
+    console.error('[RabbitMQ] Failed to publish habit.completed event:', err.message)
   }
 }
