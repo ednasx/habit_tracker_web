@@ -5,8 +5,10 @@ A web-based habit tracking application built for the **Design of Dynamic Web Sys
 The goal of this project is to provide a small but realistic full-stack system where users can:
 
 - Create and manage habits
+- Edit and delete existing habits
+- Mark habits as completed for a given day
 - View a dashboard with their own habits
-- (Later) add features such as logging, streaks, analytics, and social/leaderboard functionality
+- (Later) add features such as full logging history, streaks, analytics, and social/leaderboard functionality
 
 The project is intentionally structured in a way that is similar to real-world web systems:
 a **React** frontend talking to a **Node.js/Express** backend via a JSON API, with **Supabase** for auth + database and **RabbitMQ** for events.
@@ -23,23 +25,35 @@ a **React** frontend talking to a **Node.js/Express** backend via a JSON API, wi
 - **Supabase Auth** (email/password login & register)
 - API client layer:
   - `apiClient.js` – generic API wrapper around `fetch()` (adds `Authorization` header)
-  - `habitsApi.js` – habit-specific API functions (`getHabits`, `createHabit`)
+  - `habitsApi.js` – habit-specific API functions:
+    - `getHabits`
+    - `createHabit`
+    - `updateHabit`
+    - `deleteHabit`
+    - `logHabitCompletionToday`
 
 ### Backend
 
 - **Node.js** with **Express**
 - **ES modules** (`import` / `export`)
 - **CORS** to allow the frontend dev server to call the API
+- **helmet** for HTTP security headers (basic XSS / Clickjacking protection)
 - **Supabase**:
   - Auth (JWT-based) – verified with `SUPABASE_JWT_SECRET`
   - Postgres database (tables: `habits`, `habit_logs`)
   - Row-Level Security (RLS) so users only see their own data
 - **RabbitMQ** message queue:
-  - Publishes `habit.created` events for future consumers
+  - Publishes `habit.created` and `habit.completed` events for future consumers
 - Modular routing and services:
   - `routes/habitsRoutes.js` – `/api/habits` endpoints
-  - `services/habitsService.js` – Supabase queries
-  - `auth/authMiddleware.js` – JWT verification
+    - `GET /api/habits`
+    - `POST /api/habits`
+    - `GET /api/habits/:id`
+    - `PUT /api/habits/:id`
+    - `DELETE /api/habits/:id`
+    - `POST /api/habits/:id/logs`
+  - `services/habitsService.js` – Supabase queries (CRUD + completion logging)
+  - `auth/authMiddleware.js` – JWT verification (`requireAuth`)
 
 ### Dev / Tooling / Infra
 
@@ -49,19 +63,25 @@ a **React** frontend talking to a **Node.js/Express** backend via a JSON API, wi
 - **GitHub Actions** CI:
   - Install dependencies
   - Build frontend
-  - Run placeholder tests (frontend & backend)
+  - Run backend tests (Node test runner)
 - **Docker & Docker Compose**:
   - Containers for frontend, backend, and RabbitMQ
 - **Kubernetes + Helm**:
   - Namespaces (`habit-dev`, `habit-prod`)
   - Basic Helm chart for frontend & backend deployments/services
+- **Swagger / OpenAPI**:
+  - `backend/openapi.yaml` – API description
+  - Swagger UI endpoint at `/api/docs`
+- **Testing**:
+  - `backend/tests/authMiddleware.test.js` – tests for `requireAuth` behavior
 
 **Future plans (beyond current implementation):**
 
-- Rich habit logging and streaks (using `habit_logs`)
+- Rich habit logging UI and streak calculation (using `habit_logs`)
 - Analytics (completion rate, charts, dashboards)
 - Notifications & additional event-driven services (email, reminders)
-- More advanced security (rate limiting, stricter validation, security headers)
+- More advanced security (rate limiting, stricter validation, security headers tuning)
+- More unit/integration/end-to-end tests
 - Automated deployment to Kubernetes (e.g. via LTU Rancher)
 
 ---
@@ -81,10 +101,10 @@ habit-tracker-web/
     .env.example
     src/
       main.jsx               # React entry point
-      App.jsx                # Auth + dashboard
+      App.jsx                # Auth + dashboard + habit list/actions
       index.css              # Global styles
       components/
-        HabitForm.jsx
+        HabitForm.jsx        # Create new habits
         auth/
           AuthPage.jsx       # Login / Register page
         layout/
@@ -101,21 +121,24 @@ habit-tracker-web/
     package.json
     Dockerfile
     .env.example
-    index.js                 # Express app entry, mounts routes
+    index.js                 # Express app entry, mounts routes & Swagger UI
+    openapi.yaml             # OpenAPI spec for API docs
     auth/
-      authMiddleware.js      # Supabase JWT verification
+      authMiddleware.js      # Supabase JWT verification (requireAuth)
     config/
       supabaseClient.js      # Supabase admin client (service role)
     routes/
       habitsRoutes.js        # All /api/habits endpoints
     services/
-      habitsService.js       # Supabase queries for habits
+      habitsService.js       # Supabase queries for habits & logs
     messaging/
-      rabbitmq.js            # RabbitMQ connection + habit.created publisher
+      rabbitmq.js            # RabbitMQ connection + habit.created/completed publishers
+    tests/
+      authMiddleware.test.js # Node tests for auth middleware
 
   docs/
     database-schema.md       # DB design (habits, habit_logs)
-    security.md              # Input validation & SQL injection plan
+    security.md              # Input validation & SQL injection/XSS plan
 
   infra/
     k8s/
