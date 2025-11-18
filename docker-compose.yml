@@ -14,12 +14,13 @@ services:
   frontend:
     build: ./frontend
     container_name: habit-frontend
-    environment:
-      - VITE_API_BASE_URL=http://backend:4000/api
+    env_file:
+      - frontend/.env
     ports:
       - "5173:5173"
     depends_on:
       - backend
+
 
   rabbitmq:
     image: rabbitmq:3-management
