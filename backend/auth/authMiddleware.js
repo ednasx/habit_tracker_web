@@ -1,15 +1,17 @@
 import jwt from 'jsonwebtoken'
 
-/**
- * Middleware to verify JWT issued by Supabase.
- * Expects header: Authorization: Bearer <token>
- */
-export function requireAuth(req, res, next) {
-  const authHeader = req.headers.authorization || ''
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+export async function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization
 
-  if (!token) {
+  // 1) No Authorization header at all
+  if (!authHeader) {
     return res.status(401).json({ message: 'Missing Authorization header' })
+  }
+
+  // 2) Malformed header (not "Bearer <token>")
+  const [scheme, token] = authHeader.split(' ')
+  if (scheme !== 'Bearer' || !token) {
+    return res.status(401).json({ message: 'Invalid Authorization header format' })
   }
 
   const secret = process.env.SUPABASE_JWT_SECRET
@@ -21,12 +23,11 @@ export function requireAuth(req, res, next) {
   try {
     const decoded = jwt.verify(token, secret)
 
-    // Attach basic user info to request
+    // Supabase puts the user id in "sub"
     req.user = {
       id: decoded.sub,
       email: decoded.email,
-      role: decoded.role,
-      ...decoded, // keep full payload available if needed
+      ...decoded,
     }
 
     return next()
