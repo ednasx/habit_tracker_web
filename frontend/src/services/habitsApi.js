@@ -20,3 +20,23 @@ export async function createHabit(habit) {
     body: JSON.stringify(habit),
   })
 }
+
+export function updateHabit(id, payload) {
+  return apiRequest(`/habits/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export function deleteHabit(id) {
+  return apiRequest(`/habits/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+export function logHabitCompletionToday(id) {
+  return apiRequest(`/habits/${id}/logs`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  })
+}
