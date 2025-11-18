@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import habitsRoutes from './routes/habitsRoutes.js'
-// import { requireAuth } from './auth/authMiddleware.js'
+import { requireAuth } from './auth/authMiddleware.js'
 
 dotenv.config()
 
@@ -16,9 +16,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'habit-backend' })
 })
 
-// For now, routes are public; later you can enable auth like:
-// app.use('/api/habits', requireAuth, habitsRoutes)
-app.use('/api/habits', habitsRoutes)
+// Protect habits routes with JWT auth
+app.use('/api/habits', requireAuth, habitsRoutes)
 
 app.listen(PORT, () => {
   console.log(`Backend listening on http://localhost:${PORT}`)

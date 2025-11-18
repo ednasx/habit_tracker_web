@@ -1,46 +1,54 @@
 import { Router } from 'express'
 import { publishHabitCreatedEvent } from '../messaging/rabbitmq.js'
+import { listHabits, createHabit as createHabitInDb } from '../services/habitsService.js'
 
 const router = Router()
 
-// In-memory "database" for now – stays here for simplicity
-let nextId = 3
-let habits = [
-  { id: 1, name: 'Drink water', description: 'Drink 2L of water per day' },
-  { id: 2, name: 'Exercise', description: '30 minutes of movement' },
-]
-
-// GET /api/habits - list all habits
-router.get('/', (req, res) => {
-  res.json(habits)
+// GET /api/habits
+router.get('/', async (req, res) => {
+  try {
+    const userId = req.user?.id
+    const habits = await listHabits(userId)
+    res.json(habits)
+  } catch (err) {
+    console.error('[habits] GET / error:', err.message)
+    res.status(500).json({ message: 'Failed to fetch habits' })
+  }
 })
 
-// POST /api/habits - create a new habit
-router.post('/', (req, res) => {
+// POST /api/habits
+router.post('/', async (req, res) => {
   const { name, description } = req.body
 
   if (!name || typeof name !== 'string' || !name.trim()) {
     return res.status(400).json({ message: 'Habit name is required.' })
   }
 
-  const newHabit = {
-    id: nextId++,
-    name: name.trim(),
-    description: description ? String(description).trim() : '',
+  const userId = req.user?.id
+  if (!userId) {
+    return res.status(401).json({ message: 'User not authenticated' })
   }
 
-  habits.push(newHabit)
+  try {
+    const newHabit = await createHabitInDb({
+      userId,
+      name: name.trim(),
+      description: description ? String(description).trim() : null,
+    })
 
-  // Fire-and-forget event for other services (analytics, notifications, etc.)
-  publishHabitCreatedEvent({
-    id: newHabit.id,
-    name: newHabit.name,
-    description: newHabit.description,
-    userId: req.user?.id ?? null, // will be real when auth is wired
-    createdAt: new Date().toISOString(),
-  })
+    publishHabitCreatedEvent({
+      id: newHabit.id,
+      name: newHabit.name,
+      description: newHabit.description,
+      userId: newHabit.user_id,
+      createdAt: newHabit.created_at,
+    })
 
-  res.status(201).json(newHabit)
+    res.status(201).json(newHabit)
+  } catch (err) {
+    console.error('[habits] POST / error:', err.message)
+    res.status(500).json({ message: 'Failed to create habit' })
+  }
 })
 
 export default router
