@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: habit-backend
+    env_file:
+      - backend/.env
+    ports:
+      - "4000:4000"
+    depends_on:
+      - rabbitmq
+
+  frontend:
+    build: ./frontend
+    container_name: habit-frontend
+    environment:
+      - VITE_API_BASE_URL=http://backend:4000/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: habit-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"    # AMQP (backend uses this)
+      - "15672:15672"  # Management UI
