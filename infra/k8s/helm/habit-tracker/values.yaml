@@ -7,3 +7,11 @@ frontend:
 backend:
   image: your-docker-registry/habit-backend:latest
   port: 4000
+
+analytics:
+  image: your-docker-registry/habit-analytics:latest
+
+rabbitmq:
+  image: rabbitmq:3-management
+  username: guest
+  password: guest
