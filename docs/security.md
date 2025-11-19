@@ -67,3 +67,13 @@ This document describes the initial security design for the Habit Tracker system
 - Policies will ensure:
   - Users can only `SELECT`, `INSERT`, `UPDATE`, `DELETE` rows where `user_id = auth.uid()`.
 - This provides defense-in-depth: even if the backend has a bug, the DB will still prevent cross-user data leaks.
+
+# Authorization
+
+- All API endpoints require JWT-based authentication (Supabase) via `requireAuth`.
+- Backend queries always filter by `user_id = req.user.id`.
+- Supabase Row-Level Security (RLS) ensures that:
+  - rows in `habits`, `habit_logs`, and `habit_stats` are only accessible by their owner.
+  - `friends` table rows can only be created/modified by the user themselves.
+- Leaderboard queries are restricted to the authenticated user’s friends.
+
