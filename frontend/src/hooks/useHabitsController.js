@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
 import {
   getHabits,
   updateHabit,
@@ -12,6 +13,7 @@ import {
  * - list of habits
  * - editing form state
  * - CRUD operations
+ * - realtime updates when new habit_logs are inserted
  */
 export function useHabitsController(session) {
   const [habits, setHabits] = useState([])
@@ -22,8 +24,10 @@ export function useHabitsController(session) {
   const [editingHabitId, setEditingHabitId] = useState(null)
   const [editForm, setEditForm] = useState({ name: '', description: '' })
 
-  // Load habits when user is authenticated
-  useEffect(() => {
+  // Reusable loader so we can call it from both:
+  // - initial load
+  // - realtime event handler
+  const loadHabits = useCallback(async () => {
     if (!session) {
       setHabits([])
       setLoadingHabits(false)
@@ -31,23 +35,55 @@ export function useHabitsController(session) {
       return
     }
 
-    async function fetchHabits() {
-      try {
-        setLoadingHabits(true)
-        setError(null)
+    try {
+      setLoadingHabits(true)
+      setError(null)
 
-        const data = await getHabits()
-        setHabits(Array.isArray(data) ? data : [])
-      } catch (err) {
-        console.error('[Habits] fetch error:', err.message)
-        setError('Failed to load habits. Please try again.')
-      } finally {
-        setLoadingHabits(false)
-      }
+      const data = await getHabits()
+      setHabits(Array.isArray(data) ? data : [])
+    } catch (err) {
+      console.error('[Habits] fetch error:', err.message)
+      setError('Failed to load habits. Please try again.')
+    } finally {
+      setLoadingHabits(false)
     }
-
-    fetchHabits()
   }, [session])
+
+  // Initial + on-session-change load
+  useEffect(() => {
+    loadHabits()
+  }, [loadHabits])
+
+  // --- Realtime subscription: refresh when a new habit_log is inserted for this user ---
+  useEffect(() => {
+    const userId = session?.user?.id
+    if (!userId) return
+
+    const channel = supabase
+      .channel(`habit-logs-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'habit_logs',
+          filter: `user_id=eq.${userId}`,
+        },
+        async (payload) => {
+          console.log('[Realtime] New habit log:', payload.new)
+          // Simplest: reload habits so the dashboard stays in sync
+          await loadHabits()
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] habit_logs channel status:', status)
+      })
+
+    // Cleanup when session changes or component unmounts
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [session, loadHabits])
 
   // --- Handlers exposed to the UI ---
 
@@ -98,18 +134,18 @@ export function useHabitsController(session) {
     if (!window.confirm('Delete this habit?')) return
 
     try {
-        await deleteHabit(habitId)  // will NOT throw now if backend returns 204
-        setHabits((prev) => prev.filter((h) => h.id !== habitId))
+      await deleteHabit(habitId) // will NOT throw now if backend returns 204
+      setHabits((prev) => prev.filter((h) => h.id !== habitId))
     } catch (err) {
-        console.error('[Habits] delete error:', err.message)
-        alert('Failed to delete habit.')
+      console.error('[Habits] delete error:', err.message)
+      alert('Failed to delete habit.')
     }
   }
 
   async function handleHabitCompleted(habitId) {
     try {
       await logHabitCompletionToday(habitId)
-      // For now just inform the user; later you can update streaks/log counts.
+      // Realtime subscription will re-run loadHabits when the new log is inserted.
       alert('Habit marked as completed for today.')
     } catch (err) {
       console.error('[Habits] completion error:', err.message)
