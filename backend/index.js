@@ -6,7 +6,7 @@ import helmet from 'helmet'
 import dotenv from 'dotenv'
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
-
+import leaderboardRouter from './routes/leaderboardRoutes.js'
 import { requireAuth } from './auth/authMiddleware.js'
 import habitsRouter from './routes/habitsRoutes.js'
 
@@ -46,6 +46,9 @@ app.get('/api/health', (_req, res) => {
 
 // Protected habits routes
 app.use('/api/habits', requireAuth, habitsRouter)
+
+// Leaderboard routes
+app.use('/api/leaderboard', requireAuth, leaderboardRouter)
 
 app.listen(PORT, () => {
   console.log(`[Server] Listening on port ${PORT}`)
