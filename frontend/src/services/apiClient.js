@@ -6,22 +6,11 @@ export function setAuthToken(token) {
   authToken = token || null
 }
 
-/**
- * Generic helper to call the backend API.
- *
- * @param {string} path - The API path, e.g. "/habits"
- * @param {RequestInit} options - fetch options (method, headers, body, etc.)
- * @returns {Promise<any>} Parsed JSON response
- */
 export async function apiRequest(path, options = {}) {
   const url = `${API_BASE_URL}${path}`
 
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-  }
-
   const headers = {
-    ...defaultHeaders,
+    'Content-Type': 'application/json',
     ...(options.headers || {}),
   }
 
@@ -34,19 +23,29 @@ export async function apiRequest(path, options = {}) {
     headers,
   })
 
-  if (!response.ok) {
-    let detail = ''
-    try {
-      const data = await response.json()
-      if (data && data.message) {
-        detail = ` (${data.message})`
-      }
-    } catch {
-      // ignore JSON parse errors
-    }
+  // Try to parse JSON **only if** there is a body
+  let data = null
 
-    throw new Error(`API error: ${response.status} ${response.statusText}${detail}`)
+  // 204 No Content → no body to parse
+  if (response.status !== 204) {
+    const text = await response.text()
+    if (text) {
+      try {
+        data = JSON.parse(text)
+      } catch (err) {
+        console.warn('[apiClient] Failed to parse JSON response:', err.message)
+      }
+    }
   }
 
-  return response.json()
+  // Handle non-2xx errors
+  if (!response.ok) {
+    const message =
+      (data && (data.message || data.error)) ||
+      `Request failed with status ${response.status}`
+
+    throw new Error(message)
+  }
+
+  return data
 }
