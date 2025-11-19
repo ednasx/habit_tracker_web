@@ -53,3 +53,12 @@ app.use('/api/leaderboard', requireAuth, leaderboardRouter)
 app.listen(PORT, () => {
   console.log(`[Server] Listening on port ${PORT}`)
 })
+
+// at bottom
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`[Server] Listening on port ${PORT}`)
+  })
+}
+
+export default app
