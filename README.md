@@ -230,7 +230,7 @@ habit-tracker-web/
   .github/
     workflows/
       ci.yml                    # GitHub Actions CI pipeline
-      
+
  ``` 
 
 ## Running the App Locally
@@ -251,7 +251,8 @@ http://localhost:5173   # or whatever port is mapped for the frontend service
 
 ```
 
-With npm (dev mode)
+## With npm (dev mode)
+
 ### Backend
 ```bash
 cd backend
