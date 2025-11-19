@@ -98,11 +98,11 @@ export function useHabitsController(session) {
     if (!window.confirm('Delete this habit?')) return
 
     try {
-      await deleteHabit(habitId)
-      setHabits((prev) => prev.filter((h) => h.id !== habitId))
+        await deleteHabit(habitId)  // will NOT throw now if backend returns 204
+        setHabits((prev) => prev.filter((h) => h.id !== habitId))
     } catch (err) {
-      console.error('[Habits] delete error:', err.message)
-      alert('Failed to delete habit.')
+        console.error('[Habits] delete error:', err.message)
+        alert('Failed to delete habit.')
     }
   }
 
