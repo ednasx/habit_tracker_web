@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     build: ./backend
@@ -31,3 +29,11 @@ services:
     ports:
       - "5672:5672"    # AMQP (backend uses this)
       - "15672:15672"  # Management UI
+
+  analytics-service:
+    build: ./analytics-service
+    container_name: habit-analytics
+    env_file:
+      - analytics-service/.env
+    depends_on:
+      - rabbitmq
