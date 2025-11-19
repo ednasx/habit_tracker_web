@@ -2,100 +2,219 @@ openapi: 3.0.0
 info:
   title: Habit Tracker API
   version: 1.0.0
+  description: |
+    JSON API for the Habit Tracker application.
+    All endpoints except /health require a valid Supabase JWT (Bearer token).
 
 servers:
   - url: http://localhost:4000/api
+    description: Local development
+  - url: https://your-domain.example.com/api
+    description: Production (via Kubernetes/Rancher)
 
 paths:
   /health:
     get:
       summary: Health check
+      description: Returns basic service health information.
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: habit-backend
 
   /habits:
     get:
       summary: List habits for current user
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: List of habits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Habit'
+        '401':
+          description: Unauthorized (missing or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     post:
       summary: Create a new habit
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [name]
+              required:
+                - name
               properties:
                 name:
                   type: string
+                  example: Drink water
                 description:
                   type: string
+                  example: Drink 8 glasses of water per day
       responses:
         '201':
           description: Habit created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+        '400':
+          description: Validation error (e.g. missing name)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized (missing or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /habits/{id}:
     get:
       summary: Get a single habit
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: integer
+          description: Habit ID
       responses:
         '200':
           description: Habit details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+        '401':
+          description: Unauthorized (missing or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
-          description: Not found
+          description: Habit not found or not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     put:
       summary: Update a habit
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: integer
+          description: Habit ID
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [name]
+              required:
+                - name
               properties:
                 name:
                   type: string
+                  example: Drink water
                 description:
                   type: string
+                  example: Drink 8 glasses of water per day
       responses:
         '200':
           description: Habit updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habit'
+        '400':
+          description: Validation error (e.g. missing name)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized (missing or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Habit not found or not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     delete:
       summary: Delete a habit
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: integer
+          description: Habit ID
       responses:
         '204':
-          description: Deleted
+          description: Habit deleted successfully
+        '401':
+          description: Unauthorized (missing or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Habit not found or not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /habits/{id}/logs:
     post:
       summary: Log habit completion for a date
+      description: >
+        Logs completion of the given habit for a specific date. If the date is omitted,
+        the backend will use today's date. At most one log per habit and date is stored.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: integer
+          description: Habit ID
       requestBody:
         required: false
         content:
@@ -106,8 +225,144 @@ paths:
                 date:
                   type: string
                   format: date
+                  example: 2025-11-19
                 value:
                   type: integer
+                  example: 1
       responses:
         '201':
-          description: Completion logged
+          description: Completion logged or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitLog'
+        '400':
+          description: Validation error (e.g. invalid date)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized (missing or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Habit not found or not owned by user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /leaderboard/friends:
+    get:
+      summary: Get leaderboard of friends by total completions
+      description: >
+        Returns aggregated completion statistics for the current user's friends,
+        ordered by total completions in descending order.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Friends leaderboard
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaderboardEntry'
+        '401':
+          description: Unauthorized (missing or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error when fetching leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Habit:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: string
+          format: uuid
+          example: "91b6a89b-2a93-4cf3-bb8a-44ba1a6d3e4b"
+        name:
+          type: string
+          example: Drink water
+        description:
+          type: string
+          nullable: true
+          example: Drink 8 glasses of water per day
+        archived:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-19T10:15:30.000Z"
+
+    HabitLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 42
+        habit_id:
+          type: integer
+          example: 1
+        user_id:
+          type: string
+          format: uuid
+          example: "91b6a89b-2a93-4cf3-bb8a-44ba1a6d3e4b"
+        date:
+          type: string
+          format: date
+          example: 2025-11-19
+        value:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-19T10:15:30.000Z"
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: "91b6a89b-2a93-4cf3-bb8a-44ba1a6d3e4b"
+        total_completions:
+          type: integer
+          example: 37
+        current_streak:
+          type: integer
+          example: 5
+        longest_streak:
+          type: integer
+          example: 12
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Something went wrong
