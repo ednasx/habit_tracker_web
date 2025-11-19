@@ -76,3 +76,14 @@ create table if not exists public.habit_logs (
   created_at timestamptz default now(),
   unique (habit_id, date)
 );
+
+create table public.habit_stats (
+  habit_id     bigint references public.habits(id) on delete cascade,
+  user_id      uuid   references auth.users(id) on delete cascade,
+  total_completions integer not null default 0,
+  current_streak    integer not null default 0,
+  longest_streak    integer not null default 0,
+  last_completed_date date,
+  primary key (habit_id, user_id)
+);
+
