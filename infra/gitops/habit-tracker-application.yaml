@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: habit-tracker
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/ednasx/habit_tracker_web.git
+    targetRevision: main
+    path: infra/k8s/helm/habit-tracker
+    helm:
+      releaseName: habit-tracker
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: habit-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
