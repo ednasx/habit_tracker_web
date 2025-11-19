@@ -5,6 +5,7 @@ import AuthPage from './components/auth/AuthPage'
 import HabitsList from './components/HabitsList'
 import { useAuthSession } from './hooks/useAuthSession'
 import { useHabitsController } from './hooks/useHabitsController'
+import Leaderboard from './components/Leaderboard'
 
 function App() {
   const { session, authLoading, signOut } = useAuthSession()
@@ -70,6 +71,9 @@ function App() {
         onDeleteHabit={handleHabitDeleted}
         onCompleteHabit={handleHabitCompleted}
       />
+
+      <Leaderboard />
+      
     </AppLayout>
   )
 }
