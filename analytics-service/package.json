@@ -13,5 +13,6 @@
     "@supabase/supabase-js": "^2.83.0",
     "amqplib": "^0.10.9",
     "dotenv": "^17.2.3"
-  }
+  },
+  "type": "module"
 }
