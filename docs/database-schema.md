@@ -87,3 +87,15 @@ create table public.habit_stats (
   primary key (habit_id, user_id)
 );
 
+create table if not exists public.user_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  display_name text,
+  created_at timestamptz default now()
+);
+
+create table if not exists public.friends (
+  user_id uuid references auth.users(id) on delete cascade,
+  friend_id uuid references auth.users(id) on delete cascade,
+  created_at timestamptz default now(),
+  primary key (user_id, friend_id)
+);
