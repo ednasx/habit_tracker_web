@@ -49,6 +49,8 @@ jobs:
 
       - name: Run habit-service tests
         run: npm test
+        env:
+          NODE_ENV: test
 
   user-service:
     runs-on: ubuntu-latest
@@ -69,6 +71,8 @@ jobs:
 
       # - name: Run user-service tests
       #   run: npm test 
+      #   env:
+      #     NODE_ENV: test
       # Uncomment above when you have tests in user-service
 
   analytics-service:
@@ -90,4 +94,6 @@ jobs:
 
       # - name: Run analytics-service tests
       #   run: npm test
+      #   env:
+      #     NODE_ENV: test
       # Uncomment above when you have tests in analytics-service
