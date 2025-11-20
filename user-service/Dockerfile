@@ -11,8 +11,8 @@ RUN npm install --production
 COPY . .
 
 # Set environment and port
-ENV PORT=4000
-EXPOSE 4000
+ENV PORT=4001
+EXPOSE 4001
 
 # Start the server
 CMD ["npm", "start"]
