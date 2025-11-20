@@ -1,26 +1,216 @@
-:root {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color-scheme: light;
-  color: #1f2933;
-  background-color: #f5f7fb;
+/* App layout */
+.app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
+.app-main {
+  flex: 1;
+}
+
+/* Background – a bit more colorful */
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fb 0%, #e4ecff 40%, #fdf2ff 100%);
+  background: radial-gradient(circle at top left, #bfdbfe 0%, #e0f2fe 30%, #fce7f3 65%, #fee2e2 100%);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-#root {
-  min-height: 100vh;
+/* Sticky navbar with subtle gradient */
+.small-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-/* Optional: subtle card hover */
+.navbar.small-nav {
+  background: linear-gradient(90deg, #eff6ff, #fdf2ff);
+}
+
+/* Dashboard shell */
+.dashboard-shell {
+  max-width: 960px;
+  margin: 2.5rem auto 4rem;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+}
+
+/* Header + stats */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.dashboard-stats {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.stat-pill {
+  background: linear-gradient(135deg, #2563eb, #818cf8);
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  color: #f9fafb;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+}
+
+.stat-value {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Card background for dashboard sections */
+.dashboard-card {
+  background: linear-gradient(135deg, #eef2ff, #faf5ff);
+}
+
+/* Habit cards – more colorful */
 .habit-card {
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  background: linear-gradient(135deg, #dbeafe, #fdf2ff);
+  border-radius: 1rem;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s ease;
 }
 
 .habit-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+  background: linear-gradient(135deg, #bfdbfe, #f9a8d4);
 }
+
+/* Leaderboard card tint */
+.leaderboard-card {
+  background: linear-gradient(135deg, #ecfeff, #e0f2fe);
+}
+
+/* Auth page layout */
+.auth-page {
+  min-height: 70vh;
+}
+
+.auth-card {
+  background: linear-gradient(135deg, #f9fafb, #eef2ff);
+  border-radius: 1.25rem;
+}
+
+.auth-intro h1 {
+  color: #1d4ed8;
+}
+
+.auth-intro .lead {
+  max-width: 26rem;
+}
+
+/* ---------- Improved AuthIntro styling ---------- */
+
+.auth-intro {
+  max-width: 480px;
+}
+
+/* Little pill at the top */
+.auth-intro-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(129, 140, 248, 0.4);
+}
+
+.auth-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.auth-pill-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #1d4ed8;
+}
+
+/* Feature cards grid */
+.auth-intro-grid {
+  display: grid;
+  gap: 0.8rem;
+}
+
+@media (min-width: 768px) {
+  .auth-intro-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.auth-intro-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 0.9rem;
+  padding: 0.75rem 0.85rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+}
+
+.auth-intro-emoji {
+  font-size: 1.4rem;
+  margin-bottom: 0.25rem;
+}
+
+@keyframes habit-card-add {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.habit-card--added {
+  animation: habit-card-add 0.25s ease-out;
+}
+
+@keyframes habit-card-delete {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+
+.habit-card--deleting {
+  animation: habit-card-delete 0.25s ease-in forwards;
+}
+
+/* Streak stat pill variant */
+.stat-pill--streak {
+  background: linear-gradient(135deg, #f97316, #fb7185);
+  box-shadow: 0 12px 30px rgba(248, 113, 113, 0.35);
+}
+
+/* Per-habit streak badge */
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(248, 171, 84, 0.12);
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+

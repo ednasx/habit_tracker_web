@@ -24,12 +24,10 @@ function HabitForm({ onHabitCreated }) {
         description: description.trim() || undefined,
       })
 
-      // Inform parent (App) so it can update the list
       if (onHabitCreated) {
         onHabitCreated(newHabit)
       }
 
-      // Reset form
       setName('')
       setDescription('')
     } catch (err) {
@@ -41,7 +39,7 @@ function HabitForm({ onHabitCreated }) {
   }
 
   return (
-    <div className="card border-0 shadow-sm mb-4">
+    <div className="card border-0 shadow-sm dashboard-card">
       <div className="card-body">
         <h2 className="h5 mb-3">Create a new habit</h2>
         <form onSubmit={handleSubmit} className="row g-3">
