@@ -13,10 +13,31 @@ spec:
     - host: your-domain.example.com
       http:
         paths:
+          - path: /api/habits
+            pathType: Prefix
+            backend:
+              service:
+                name: habit-service
+                port:
+                  number: 4000
+          - path: /api/leaderboard
+            pathType: Prefix
+            backend:
+              service:
+                name: habit-service
+                port:
+                  number: 4000
+          - path: /api/users
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 4001
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: {{ .Release.Name }}-frontend
+                name: habit-frontend
                 port:
                   number: 80

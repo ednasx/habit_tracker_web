@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: habit-backend
+  name: habit-service
   namespace: {{ .Values.namespace }}
 spec:
   selector:
-    app: habit-backend
+    app: habit-service
   ports:
     - port: 4000
-      targetPort: {{ .Values.backend.port }}
+      targetPort: {{ .Values.habitService.port }}
       protocol: TCP

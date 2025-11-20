@@ -13,7 +13,7 @@ The goal of this project is to provide a small but realistic full-stack system w
 - (Backend) expose a social leaderboard (friends + completions)
 
 The project is intentionally structured in a way that is similar to real-world web systems:
-a **React** frontend talking to a **Node.js/Express** backend via a JSON API, with **Supabase** for auth + database and **RabbitMQ** for events, plus a separate **analytics service** that consumes events.
+a **React** frontend talking to **Node.js/Express** microservices via a JSON API, with **Supabase** for auth + database and **RabbitMQ** for events, plus a separate **analytics service** that consumes events.
 
 ---
 
@@ -38,56 +38,34 @@ a **React** frontend talking to a **Node.js/Express** backend via a JSON API, wi
     - `logHabitCompletionToday`
   - `Leaderboard` UI component consuming `/api/leaderboard/friends`
 
-### Backend
+### Backend Services
 
-- **Node.js** with **Express**
-- **ES modules** (`import` / `export`)
-- **CORS** to allow the frontend dev server to call the API
-- **helmet** for HTTP security headers (basic XSS / Clickjacking protection)
-- **Supabase**:
-  - Auth (JWT-based) – verified with `SUPABASE_JWT_SECRET` via `requireAuth`
-  - Postgres database (tables: `habits`, `habit_logs`, `habit_stats`, `user_profiles`, `friends`)
-  - Row-Level Security (RLS) so users only see their own data
-- **RabbitMQ** message queue:
-  - Publishes `habit.created` events
-  - Publishes `habit.completed` events with `{ userId, habitId, date, ... }` payloads
-- Modular routing and services:
-  - `routes/habitsRoutes.js` – `/api/habits` endpoints
-    - `GET /api/habits`
-    - `POST /api/habits`
-    - `GET /api/habits/:id`
-    - `PUT /api/habits/:id`
-    - `DELETE /api/habits/:id`
-    - `POST /api/habits/:id/logs` (log completion; one log per habit per day)
-  - `routes/leaderboardRoutes.js` – `/api/leaderboard` endpoints
-    - `GET /api/leaderboard/friends` – leaderboard for the current user’s friends based on `habit_stats`
-  - `services/habitsService.js` – Supabase queries (CRUD + completion logging)
-  - `services/leaderboardService.js` – Supabase queries for friend leaderboard using `friends` and `habit_stats`
-  - `auth/authMiddleware.js` – JWT verification (`requireAuth`), attaches `req.user`
-  - `messaging/rabbitmq.js` – RabbitMQ connection + `publishHabitCreatedEvent`, `publishHabitCompletedEvent`
-- **API Documentation**:
-  - `openapi.yaml` – OpenAPI 3 spec describing:
-    - `/health`
-    - `/habits` & `/habits/{id}` (CRUD)
-    - `/habits/{id}/logs`
-    - `/leaderboard/friends`
-  - Served via Swagger UI at `/api/docs`
+The backend logic is split into microservices to demonstrate a scalable architecture:
 
-### Analytics Service
+1. **Habit Service** (Port 4000)
+   - **Node.js** with **Express**
+   - **ES modules**
+   - **Supabase** for data persistence (tables: `habits`, `habit_logs`, `habit_stats`)
+   - **RabbitMQ** message queue:
+     - Publishes `habit.created` events
+     - Publishes `habit.completed` events
+   - Modular routing and services:
+     - `routes/habitsRoutes.js` – `/api/habits` endpoints
+     - `routes/leaderboardRoutes.js` – `/api/leaderboard` endpoints
+   - **API Documentation**: `openapi.yaml` served via Swagger UI at `/api/docs`
 
-- Separate Node.js service (runs in its own container)
-- Depends on:
-  - `@supabase/supabase-js`
-  - `amqplib`
-  - `dotenv`
-- Responsibilities:
-  - Connect to RabbitMQ and consume `habit.completed` events
-  - Update the `habit_stats` table:
-    - `total_completions`
-    - `current_streak`
-    - `longest_streak`
-    - `last_completed_date`
-  - Provide backend and future services with precomputed analytics for users and friends
+2. **User Service** (Port 4001)
+   - **Node.js** with **Express**
+   - Manages User Profiles and Friendships (tables: `user_profiles`, `friends`)
+   - Connected to Supabase for data persistence
+
+3. **Analytics Service**
+   - Separate Node.js service (runs in its own container)
+   - Depends on: `@supabase/supabase-js`, `amqplib`, `dotenv`
+   - Responsibilities:
+     - Connect to RabbitMQ and consume `habit.completed` events
+     - Update the `habit_stats` table: `total_completions`, `current_streak`, `longest_streak`, `last_completed_date`
+     - Provide backend and future services with precomputed analytics for users and friends
 
 ### Dev / Tooling / Infra
 
@@ -101,7 +79,8 @@ a **React** frontend talking to a **Node.js/Express** backend via a JSON API, wi
 - **Docker & Docker Compose**:
   - Containers for:
     - `frontend`
-    - `backend`
+    - `habit-service`
+    - `user-service`
     - `rabbitmq`
     - `analytics-service`
   - Local development:
@@ -109,7 +88,8 @@ a **React** frontend talking to a **Node.js/Express** backend via a JSON API, wi
 - **Kubernetes + Helm** (for deployment, e.g. via LTU Rancher):
   - Namespaces (e.g. `habit-dev`, `habit-prod`)
   - Helm chart for:
-    - Backend Deployment + Service
+    - Habit Service Deployment + Service
+    - User Service Deployment + Service
     - Frontend Deployment + Service
     - Analytics-service Deployment
     - RabbitMQ Deployment + Service
@@ -123,11 +103,11 @@ a **React** frontend talking to a **Node.js/Express** backend via a JSON API, wi
   - `cert-manager` + Let’s Encrypt `ClusterIssuer`
   - Frontend `Ingress` with TLS enabled
 - **Swagger / OpenAPI**:
-  - `backend/openapi.yaml` – API description
+  - `habit-service/openapi.yaml` – API description
   - Swagger UI endpoint at `/api/docs`
 - **Testing**:
-  - `backend/tests/authMiddleware.test.js` – tests for `requireAuth`
-  - `backend/tests/habitsRoutes.test.js` – basic failure tests (unauthorized, validation errors)
+  - `habit-service/tests/authMiddleware.test.js` – tests for `requireAuth`
+  - `habit-service/tests/habitsRoutes.test.js` – basic failure tests (unauthorized, validation errors)
 - **Security / Authorization**:
   - JWT-based authentication via Supabase
   - RLS on `habits`, `habit_logs`, `habit_stats`, `friends`, etc.
@@ -140,6 +120,7 @@ a **React** frontend talking to a **Node.js/Express** backend via a JSON API, wi
 ```text
 habit-tracker-web/
   README.md
+  MISSING_AND_TODOS.md        # Checklist for setup
   .gitignore
   docker-compose.yml
 
@@ -170,7 +151,7 @@ habit-tracker-web/
         apiClient.js            # Generic API wrapper around fetch()
         habitsApi.js            # Habit-specific API functions
 
-  backend/
+  habit-service/                # Was 'backend'; handles Habits & Leaderboard
     package.json
     Dockerfile
     .env.example
@@ -192,6 +173,16 @@ habit-tracker-web/
       authMiddleware.test.js    # Node tests for auth middleware
       habitsRoutes.test.js      # Basic error-case tests for habits API
 
+  user-service/                 # NEW: handles User Profiles & Friends
+    package.json
+    Dockerfile
+    .env.example
+    index.js
+    routes/
+      usersRoutes.js            # /api/users/profile, /api/users/friends
+    services/
+      userService.js            # User & Friends logic
+
   analytics-service/
     package.json
     Dockerfile
@@ -211,8 +202,10 @@ habit-tracker-web/
         Chart.yaml
         values.yaml
         templates/
-          backend-deployment.yaml
-          backend-service.yaml
+          habit-service-deployment.yaml
+          habit-service-service.yaml
+          user-service-deployment.yaml
+          user-service-service.yaml
           frontend-deployment.yaml
           frontend-service.yaml
           analytics-deployment.yaml
@@ -230,7 +223,6 @@ habit-tracker-web/
   .github/
     workflows/
       ci.yml                    # GitHub Actions CI pipeline
-
  ``` 
 
 ## Running the App Locally
@@ -241,28 +233,33 @@ From the project root:
 
 ```bash
 docker compose up --build
-
 ```
 
 Then open the frontend in your browser (depending on your docker-compose.yml):
 
 ```text
 http://localhost:5173   # or whatever port is mapped for the frontend service
-
 ```
 
 ### With npm (dev mode)
 
-### Backend
+### Habit Service
 ```bash
-cd backend
+cd habit-service
 cp .env.example .env      # fill in Supabase & RabbitMQ values
 npm install
 npm run dev
-
 ```
-
 This starts the API server (by default on http://localhost:4000/api).
+
+### User Service
+```bash
+cd user-service
+cp .env.example .env
+npm install
+npm run dev
+```
+This starts the User service (by default on http://localhost:4001/api).
 
 ### Frontend
 ```bash
@@ -270,11 +267,9 @@ cd frontend
 cp .env.example .env      # fill in VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_BASE_URL
 npm install
 npm run dev
-
 ```
 Then open the URL printed by Vite, for example:
 
 ```text
 http://localhost:5173
-
 ```

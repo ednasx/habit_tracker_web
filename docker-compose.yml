@@ -1,11 +1,33 @@
 services:
-  backend:
-    build: ./backend
-    container_name: habit-backend
+  # API Gateway for Local Dev
+  nginx:
+    image: nginx:alpine
+    container_name: habit-gateway
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - habit-service
+      - user-service
+
+  habit-service:
+    build: ./habit-service
+    container_name: habit-service
     env_file:
-      - backend/.env
+      - habit-service/.env
     ports:
       - "4000:4000"
+    depends_on:
+      - rabbitmq
+
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    env_file:
+      - user-service/.env
+    ports:
+      - "4001:4001"
     depends_on:
       - rabbitmq
 
@@ -17,7 +39,7 @@ services:
     ports:
       - "5173:5173"
     depends_on:
-      - backend
+      - nginx
 
 
   rabbitmq:

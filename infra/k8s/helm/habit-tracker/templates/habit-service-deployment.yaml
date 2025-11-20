@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: habit-backend
+  name: habit-service
   namespace: {{ .Values.namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: habit-backend
+      app: habit-service
   template:
     metadata:
       labels:
-        app: habit-backend
+        app: habit-service
     spec:
       containers:
-        - name: backend
-          image: {{ .Values.backend.image }}
+        - name: habit-service
+          image: {{ .Values.habitService.image }}
           ports:
-            - containerPort: {{ .Values.backend.port }}
+            - containerPort: {{ .Values.habitService.port }}
           env:
             - name: PORT
-              value: "{{ .Values.backend.port }}"
+              value: "{{ .Values.habitService.port }}"
             # Later: mount secrets for DB, Supabase, RabbitMQ, etc.
