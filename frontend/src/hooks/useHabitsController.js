@@ -131,8 +131,6 @@ export function useHabitsController(session) {
   }
 
   async function handleHabitDeleted(habitId) {
-    if (!window.confirm('Delete this habit?')) return
-
     try {
       await deleteHabit(habitId) // will NOT throw now if backend returns 204
       setHabits((prev) => prev.filter((h) => h.id !== habitId))
