@@ -22,3 +22,7 @@ spec:
             - name: PORT
               value: "{{ .Values.userService.port }}"
             # Later: mount secrets for DB, Supabase, RabbitMQ, etc.
+            - name: RABBITMQ_URL
+              value: "amqp://habit-tracker-rabbitmq:5672"
+            - name: RABBITMQ_HABIT_EXCHANGE
+              value: "habit.events"

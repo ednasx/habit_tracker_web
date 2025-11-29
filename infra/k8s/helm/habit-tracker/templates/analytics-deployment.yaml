@@ -29,6 +29,6 @@ spec:
                   name: {{ .Release.Name }}-supabase
                   key: SUPABASE_SERVICE_ROLE_KEY
             - name: RABBITMQ_URL
-              value: "amqp://rabbitmq:5672"
+              value: "amqp://habit-tracker-rabbitmq:5672"
             - name: RABBITMQ_HABIT_EXCHANGE
               value: "habit.events"
