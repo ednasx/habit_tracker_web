@@ -20,4 +20,4 @@ spec:
             - containerPort: {{ .Values.frontend.port }}
           env:
             - name: VITE_API_BASE_URL
-              value: "http://habit-backend:4000/api"
+              value: "/api"

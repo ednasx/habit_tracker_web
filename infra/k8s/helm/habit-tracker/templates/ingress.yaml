@@ -7,10 +7,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - your-domain.example.com
+        - habit-tracker.ltu-m7011e-8.se
       secretName: habit-tls
   rules:
-    - host: your-domain.example.com
+    - host: habit-tracker.ltu-m7011e-8.se
       http:
         paths:
           - path: /api/habits
