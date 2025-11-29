@@ -7,7 +7,6 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce  # Only one pod can mount at a time
-  storageClassName: ""  # Use default storage class (or specify one)
   resources:
     requests:
       storage: {{ .Values.rabbitmq.storage | default "1Gi" }}  # Default 1GB
