@@ -1,41 +1,4 @@
 # Missing Items & Upcoming To-Dos
-
-## 1. Supabase Setup (Immediate Action)
-Since you haven't set up Supabase yet, your services will fail to start or error out because they cannot connect to the database.
-
-**Action Items:**
-1.  **Create a Supabase Project**: Go to [supabase.com](https://supabase.com) and create a new project.
-2.  **Get Credentials**:
-    *   `SUPABASE_URL`
-    *   `SUPABASE_SERVICE_ROLE_KEY` (for Backend services - `habit-service`, `user-service`, `analytics-service`)
-    *   `SUPABASE_ANON_KEY` (for Frontend `VITE_SUPABASE_ANON_KEY`)
-3.  **Run Database Schema**:
-    *   Go to the SQL Editor in Supabase.
-    *   Run the SQL from `docs/database-schema.md` (create tables: `users`, `habits`, `habit_logs`, `habit_stats`, `friends`).
-    *   Run the RLS policies from `supabase/rls-policies.sql`.
-
-## 2. Environment Variables (.env)
-You need to create `.env` files for each service. Since Supabase isn't ready, you can use placeholders for now, but **replace them** once you have the real credentials.
-
-**Locations:**
-*   `habit-service/.env`
-*   `user-service/.env`
-*   `analytics-service/.env`
-*   `frontend/.env`
-
-**Template (`habit-service/.env`, `user-service/.env`, `analytics-service/.env`):**
-```bash
-PORT=4000 # (Use 4001 for user-service)
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
-RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-```
-
-**Template (`frontend/.env`):**
-```bash
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
-VITE_API_BASE_URL=http://localhost:8080/api # Updated to point to Nginx Gateway
 ```
 
 ## 3. Frontend & API Gateway (Crucial for Development)
@@ -50,3 +13,70 @@ Ensure you run `docker compose up --build` to start the Nginx container along wi
 *   [ ] **Verify User Service**: Test the new `/api/users/profile` and `/api/users/friends` endpoints once DB is ready.
 *   [ ] **Redis Implementation** (Deferred): You chose to skip this for now, but keep it in mind for the "Dynamic Web Systems" requirements later.
 *   [ ] **Test Coverage**: Ensure `habit-service` and `user-service` both have >50% test coverage.
+
+
+## 3. Automated CI/CD Pipeline (Future Enhancement) 🚀
+
+Currently, when you change application code, you must manually:
+1. Build Docker images
+2. Push to Docker Hub
+3. Argo CD detects image changes (if using image tags)
+
+**Goal**: Automate this process so code changes automatically trigger builds and deployments.
+
+### Implementation Plan
+
+**GitHub Actions Workflow** (`.github/workflows/cd.yml`):
+1. **Trigger**: On push to `main` branch (or merge to main)
+2. **Build Stage**:
+   - Build Docker images for all services (`habit-service`, `user-service`, `analytics-service`, `frontend`)
+   - Tag images with Git commit SHA: `YOUR_USERNAME/habit-service:${GITHUB_SHA}`
+   - Push to Docker Hub
+3. **Update Helm Values**:
+   - Update `infra/k8s/helm/habit-tracker/values.yaml` with new image tags
+   - Commit and push back to Git
+4. **Argo CD Sync**:
+   - Argo CD automatically detects Git change
+   - Pulls new images and redeploys
+
+### Benefits
+- ✅ No manual `docker build`/`docker push` commands
+- ✅ Automatic deployments on code changes
+- ✅ Image versioning via Git commit SHA
+- ✅ Rollback capability (previous image tags in Git history)
+
+### Prerequisites
+- Docker Hub account with access token
+- GitHub Secrets configured: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
+- Argo CD already watching Git repo (✅ Done)
+
+### Example Workflow Structure
+name: Build and Deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and push images
+        # Build all services, tag with ${{ github.sha }}, push to Docker Hub
+      - name: Update Helm values
+        # Update values.yaml with new image tags
+      - name: Commit and push
+        # Git commit and push updated values.yaml
+
+
+## 4. Upcoming To-Dos
+
+- [ ] **Supabase Secrets**: Create K8s secrets for Supabase credentials in production
+- [ ] **Verify User Service**: Test the new `/api/users/profile` and `/api/users/friends` endpoints once DB is ready
+- [ ] **Frontend Production Build**: Switch from Vite dev server to production build with Nginx (when ready for production)
+- [ ] **Redis Implementation** (Deferred): Skipped for now, but keep in mind for "Dynamic Web Systems" requirements (leaderboard performance)
+- [ ] **Test Coverage**: Ensure `habit-service` and `user-service` both have >50% test coverage
+- [ ] **CI/CD Pipeline**: Implement automated build and deployment workflow (see Section 3 above)
+- [ ] **Monitoring & Observability**: Set up Prometheus and Grafana for metrics collection (REQ13)
+- [ ] **Performance Testing**: Load testing and bottleneck identification (REQ18, REQ19)
+- [ ] **Security Hardening**: Complete HTTPS/SSL setup, SQL injection/XSS protection documentation (REQ20-REQ24)
+- [ ] **Compliance**: GDPR considerations and ethical analysis documentation (REQ25-REQ27)
