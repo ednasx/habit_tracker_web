@@ -28,10 +28,10 @@ spec:
           volumeMounts:
             - name: rabbitmq-data
               mountPath: /var/lib/rabbitmq
-          volumes:
-            - name: rabbitmq-data
-              persistentVolumeClaim:
-                claimName: {{ .Release.Name }}-rabbitmq-pvc
+      volumes:                             
+        - name: rabbitmq-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-rabbitmq-pvc
 ---
 apiVersion: v1
 kind: Service
