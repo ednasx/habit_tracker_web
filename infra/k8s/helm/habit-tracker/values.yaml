@@ -21,3 +21,4 @@ rabbitmq:
   image: rabbitmq:3-management
   username: guest
   password: guest
+  storage: 1Gi

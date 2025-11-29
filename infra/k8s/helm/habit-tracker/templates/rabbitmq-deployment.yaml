@@ -25,6 +25,13 @@ spec:
           ports:
             - containerPort: 5672
             - containerPort: 15672
+          volumeMounts:
+            - name: rabbitmq-data
+              mountPath: /var/lib/rabbitmq
+          volumes:
+            - name: rabbitmq-data
+              persistentVolumeClaim:
+                claimName: {{ .Release.Name }}-rabbitmq-pvc
 ---
 apiVersion: v1
 kind: Service
