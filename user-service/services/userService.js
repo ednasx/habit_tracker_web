@@ -27,3 +27,50 @@ export async function listFriends(userId) {
   return data
 }
 
+export async function addFriendship(userId, friendId) {
+  if (userId === friendId) {
+    throw new Error('Cannot add yourself as a friend')
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('friends')
+    .insert([
+      {
+        user_id: userId,
+        friend_id: friendId,
+      },
+    ])
+    .select('user_id, friend_id, created_at')
+    .single()
+
+  if (error) {
+    // Check if friendship already exists (unique constraint violation)
+    if (error.code === '23505') {
+      throw new Error('Friendship already exists')
+    }
+    throw new Error(`Failed to add friendship: ${error.message}`)
+  }
+
+  return data
+}
+
+export async function removeFriendship(userId, friendId) {
+  const { data, error } = await supabaseAdmin
+    .from('friends')
+    .delete()
+    .eq('user_id', userId)
+    .eq('friend_id', friendId)
+    .select('user_id, friend_id')
+    .single()
+
+  if (error) {
+    throw new Error(`Failed to remove friendship: ${error.message}`)
+  }
+
+  if (!data) {
+    throw new Error('Friendship not found')
+  }
+
+  return data
+}
+

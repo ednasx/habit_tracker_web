@@ -69,3 +69,21 @@ export async function publishHabitCompletedEvent(event) {
     console.error('[RabbitMQ] Failed to publish habit.completed event:', err.message)
   }
 }
+
+export async function publishFriendshipChangedEvent(event) {
+  if (process.env.NODE_ENV === 'test') return
+
+  if (!channel) {
+    console.warn('[RabbitMQ] Channel not ready, cannot publish user.friendship.changed event')
+    return
+  }
+
+  try {
+    const payload = Buffer.from(JSON.stringify(event))
+    await channel.publish(EXCHANGE_NAME, 'user.friendship.changed', payload, {
+      persistent: true,
+    })
+  } catch (err) {
+    console.error('[RabbitMQ] Failed to publish user.friendship.changed event:', err.message)
+  }
+}
