@@ -13,7 +13,7 @@ import {
  * - list of habits
  * - editing form state
  * - CRUD operations
- * - realtime updates when new habit_logs are inserted
+ * - realtime updates when habit_stats are updated by analytics-service
  */
 export function useHabitsController(session) {
   const [habits, setHabits] = useState([])
@@ -54,34 +54,34 @@ export function useHabitsController(session) {
     loadHabits()
   }, [loadHabits])
 
-  // --- Realtime subscription: refresh when a new habit_log is inserted for this user ---
+  // --- Realtime subscription: refresh when habit_stats are updated by analytics-service ---
   useEffect(() => {
     const userId = session?.user?.id
     if (!userId) return
 
-    const channel = supabase
-      .channel(`habit-logs-${userId}`)
+    const statsChannel = supabase
+      .channel(`habit-stats-${userId}`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: 'UPDATE', // Listen for updates (when analytics-service writes new stats)
           schema: 'public',
-          table: 'habit_logs',
+          table: 'habit_stats',
           filter: `user_id=eq.${userId}`,
         },
         async (payload) => {
-          console.log('[Realtime] New habit log:', payload.new)
-          // Simplest: reload habits so the dashboard stays in sync
+          console.log('[Realtime] Stats updated by analytics-service:', payload.new)
+          // Refresh habits to get updated streaks and totals
           await loadHabits()
         }
       )
       .subscribe((status) => {
-        console.log('[Realtime] habit_logs channel status:', status)
+        console.log('[Realtime] habit_stats channel status:', status)
       })
 
     // Cleanup when session changes or component unmounts
     return () => {
-      supabase.removeChannel(channel)
+      supabase.removeChannel(statsChannel)
     }
   }, [session, loadHabits])
 
@@ -141,12 +141,46 @@ export function useHabitsController(session) {
   }
 
   async function handleHabitCompleted(habitId) {
+    // 1. Optimistic update: immediately update UI with estimated stats
+    setHabits((prev) =>
+      prev.map((h) => {
+        if (h.id !== habitId) return h
+
+        const currentStreak = h.current_streak ?? 0
+        const totalCompletions = h.total_completions ?? 0
+        const lastCompletedDate = h.last_completed_date
+
+        // Simple optimistic logic: if last completed was yesterday or earlier, increment streak
+        // Otherwise, keep current streak (same day completion)
+        const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+        let newStreak = currentStreak
+
+        if (!lastCompletedDate || lastCompletedDate < today) {
+          // If never completed or last completion was before today, increment streak
+          // (This is a simple estimate; analytics-service will compute the real streak)
+          newStreak = currentStreak + 1
+        }
+
+        return {
+          ...h,
+          total_completions: totalCompletions + 1,
+          current_streak: newStreak,
+          longest_streak: Math.max(h.longest_streak ?? 0, newStreak),
+          last_completed_date: today,
+        }
+      })
+    )
+
     try {
+      // 2. Send API request
       await logHabitCompletionToday(habitId)
-      // Realtime subscription will re-run loadHabits when the new log is inserted.
-      alert('Habit marked as completed for today.')
+
+      // 3. No setTimeout needed! The habit_stats realtime subscription will automatically
+      // refresh when analytics-service updates the stats after processing the RabbitMQ event.
     } catch (err) {
       console.error('[Habits] completion error:', err.message)
+      // Revert optimistic update on error
+      await loadHabits()
       alert('Failed to log completion.')
     }
   }

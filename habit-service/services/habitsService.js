@@ -6,119 +6,6 @@ function ensureSupabaseConfigured() {
   }
 }
 
-/**
- * Recompute stats (total_completions, current_streak, longest_streak, last_completed_date)
- * for a given (user, habit) pair based on habit_logs.
- *
- * This is called after every logHabitCompletion.
- */
-async function recomputeHabitStats({ userId, habitId }) {
-  ensureSupabaseConfigured()
-
-  // Get all log dates for this habit/user
-  const { data: logs, error: logsError } = await supabaseAdmin
-    .from('habit_logs')
-    .select('date')
-    .eq('user_id', userId)
-    .eq('habit_id', habitId)
-    .order('date', { ascending: true })
-
-  if (logsError) {
-    throw new Error(`Supabase recomputeHabitStats logs error: ${logsError.message}`)
-  }
-
-  const dates = (logs ?? [])
-    .map((row) => row.date)
-    .filter(Boolean)
-
-  // If there are no logs, reset stats for this habit
-  if (dates.length === 0) {
-    const { error: upsertError } = await supabaseAdmin
-      .from('habit_stats')
-      .upsert(
-        [
-          {
-            habit_id: habitId,
-            user_id: userId,
-            total_completions: 0,
-            current_streak: 0,
-            longest_streak: 0,
-            last_completed_date: null,
-          },
-        ],
-        { onConflict: 'habit_id,user_id' }
-      )
-
-    if (upsertError) {
-      throw new Error(`Supabase recomputeHabitStats upsert error: ${upsertError.message}`)
-    }
-
-    return
-  }
-
-  // Helper: convert YYYY-MM-DD to a day number (UTC) for easy diff
-  const toDayNumber = (dateStr) => {
-    const d = new Date(`${dateStr}T00:00:00Z`)
-    return Math.floor(d.getTime() / 86400000)
-  }
-
-  const uniqueDates = dates // already sorted ascending and unique due to (habit_id,date) upsert
-  const totalCompletions = uniqueDates.length
-  const lastCompletedDate = uniqueDates[uniqueDates.length - 1]
-
-  // Compute longest_streak and current_streak (streak ending at lastCompletedDate)
-  let longestStreak = 0
-  let currentStreak = 0
-
-  let streak = 0
-  let prevDayNum = null
-
-  for (const ds of uniqueDates) {
-    const dayNum = toDayNumber(ds)
-
-    if (prevDayNum === null) {
-      streak = 1
-    } else if (dayNum === prevDayNum + 1) {
-      // consecutive day continues streak
-      streak += 1
-    } else if (dayNum === prevDayNum) {
-      // same day (should not happen with upsert constraint), ignore
-    } else {
-      // break in streak, start new streak
-      streak = 1
-    }
-
-    if (streak > longestStreak) {
-      longestStreak = streak
-    }
-
-    prevDayNum = dayNum
-  }
-
-  // At the end of the loop, `streak` is the streak ending at the last date
-  currentStreak = streak
-
-  const { error: upsertError } = await supabaseAdmin
-    .from('habit_stats')
-    .upsert(
-      [
-        {
-          habit_id: habitId,
-          user_id: userId,
-          total_completions: totalCompletions,
-          current_streak: currentStreak,
-          longest_streak: longestStreak,
-          last_completed_date: lastCompletedDate,
-        },
-      ],
-      { onConflict: 'habit_id,user_id' }
-    )
-
-  if (upsertError) {
-    throw new Error(`Supabase recomputeHabitStats upsert error: ${upsertError.message}`)
-  }
-}
-
 export async function listHabits(userId) {
   ensureSupabaseConfigured()
 
@@ -287,7 +174,10 @@ export async function deleteHabit({ userId, habitId }) {
 /**
  * Log a habit completion for a given date.
  * If an entry already exists for (habit_id, date), upsert ensures it is updated.
- * After logging, recompute stats in habit_stats.
+ * 
+ * Stats (streaks, totals) are computed asynchronously by analytics-service
+ * after consuming the habit.completed RabbitMQ event published by the route handler.
+ * This maintains proper microservices separation of concerns.
  */
 export async function logHabitCompletion({ userId, habitId, date, value = 1 }) {
   ensureSupabaseConfigured()
@@ -315,8 +205,8 @@ export async function logHabitCompletion({ userId, habitId, date, value = 1 }) {
     throw new Error(`Supabase logHabitCompletion error: ${error.message}`)
   }
 
-  // Recompute streaks and other stats for this habit
-  await recomputeHabitStats({ userId, habitId })
+  // Stats are computed asynchronously by analytics-service via RabbitMQ events
+  // No synchronous recomputation here to maintain microservices architecture
 
   return data
 }
