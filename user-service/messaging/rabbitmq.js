@@ -7,6 +7,12 @@ let connection = null
 let channel = null
 
 async function connectRabbitMQ() {
+  // Skip RabbitMQ connection during tests to prevent hanging
+  if (process.env.NODE_ENV === 'test') {
+    console.log('[RabbitMQ] Skipping connection in test environment')
+    return
+  }
+
   try {
     connection = await amqplib.connect(RABBITMQ_URL)
     channel = await connection.createChannel()
@@ -29,6 +35,8 @@ connectRabbitMQ().catch((err) => {
 })
 
 export async function publishHabitCreatedEvent(event) {
+  if (process.env.NODE_ENV === 'test') return
+
   if (!channel) {
     console.warn('[RabbitMQ] Channel not ready, cannot publish habit.created event')
     return
@@ -45,6 +53,8 @@ export async function publishHabitCreatedEvent(event) {
 }
 
 export async function publishHabitCompletedEvent(event) {
+  if (process.env.NODE_ENV === 'test') return
+
   if (!channel) {
     console.warn('[RabbitMQ] Channel not ready, cannot publish habit.completed event')
     return
