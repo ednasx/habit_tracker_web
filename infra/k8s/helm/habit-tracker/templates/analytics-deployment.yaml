@@ -17,6 +17,7 @@ spec:
       containers:
         - name: analytics
           image: {{ .Values.analytics.image }}
+          imagePullPolicy: Always
           env:
             - name: SUPABASE_URL
               valueFrom:

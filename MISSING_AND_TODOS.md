@@ -15,57 +15,41 @@ Ensure you run `docker compose up --build` to start the Nginx container along wi
 *   [ ] **Test Coverage**: Ensure `habit-service` and `user-service` both have >50% test coverage.
 
 
-## 3. Automated CI/CD Pipeline (Future Enhancement) 🚀
+## 3. Automated CI/CD Pipeline ✅
 
-Currently, when you change application code, you must manually:
-1. Build Docker images
-2. Push to Docker Hub
-3. Argo CD detects image changes (if using image tags)
+**Status**: ✅ **IMPLEMENTED**
 
-**Goal**: Automate this process so code changes automatically trigger builds and deployments.
+The CI/CD pipeline is now fully automated! See `.github/workflows/cd.yml` for the implementation.
 
-### Implementation Plan
+### How It Works
 
-**GitHub Actions Workflow** (`.github/workflows/cd.yml`):
-1. **Trigger**: On push to `main` branch (or merge to main)
+1. **Trigger**: On push to `main` branch
 2. **Build Stage**:
-   - Build Docker images for all services (`habit-service`, `user-service`, `analytics-service`, `frontend`)
-   - Tag images with Git commit SHA: `YOUR_USERNAME/habit-service:${GITHUB_SHA}`
-   - Push to Docker Hub
+   - Builds Docker images for all services (`habit-service`, `user-service`, `analytics-service`, `frontend`)
+   - Tags images with Git commit SHA: `YOUR_USERNAME/service-name:${GITHUB_SHA}`
+   - Also tags with `latest` for convenience
+   - Pushes to Docker Hub
 3. **Update Helm Values**:
-   - Update `infra/k8s/helm/habit-tracker/values.yaml` with new image tags
-   - Commit and push back to Git
+   - Automatically updates `infra/k8s/helm/habit-tracker/values.yaml` with new image tags
+   - Commits and pushes the update back to Git
 4. **Argo CD Sync**:
    - Argo CD automatically detects Git change
-   - Pulls new images and redeploys
+   - Pulls new images and redeploys pods
+
+### Setup Required
+
+**GitHub Secrets** (Repository Settings → Secrets and variables → Actions):
+- `DOCKERHUB_USERNAME`: Your Docker Hub username
+- `DOCKERHUB_TOKEN`: Your Docker Hub access token
+
+See `.github/workflows/README.md` for detailed setup instructions.
 
 ### Benefits
 - ✅ No manual `docker build`/`docker push` commands
 - ✅ Automatic deployments on code changes
 - ✅ Image versioning via Git commit SHA
 - ✅ Rollback capability (previous image tags in Git history)
-
-### Prerequisites
-- Docker Hub account with access token
-- GitHub Secrets configured: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
-- Argo CD already watching Git repo (✅ Done)
-
-### Example Workflow Structure
-name: Build and Deploy
-on:
-  push:
-    branches: [main]
-jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build and push images
-        # Build all services, tag with ${{ github.sha }}, push to Docker Hub
-      - name: Update Helm values
-        # Update values.yaml with new image tags
-      - name: Commit and push
-        # Git commit and push updated values.yaml
+- ✅ `imagePullPolicy: Always` configured in all deployments
 
 
 ## 4. Upcoming To-Dos
@@ -75,7 +59,7 @@ jobs:
 - [ ] **Frontend Production Build**: Switch from Vite dev server to production build with Nginx (when ready for production)
 - [ ] **Redis Implementation** (Deferred): Skipped for now, but keep in mind for "Dynamic Web Systems" requirements (leaderboard performance)
 - [ ] **Test Coverage**: Ensure `habit-service` and `user-service` both have >50% test coverage
-- [ ] **CI/CD Pipeline**: Implement automated build and deployment workflow (see Section 3 above)
+- [x] **CI/CD Pipeline**: Implement automated build and deployment workflow ✅ (see Section 3 above)
 - [ ] **Monitoring & Observability**: Set up Prometheus and Grafana for metrics collection (REQ13)
 - [ ] **Performance Testing**: Load testing and bottleneck identification (REQ18, REQ19)
 - [ ] **Security Hardening**: Complete HTTPS/SSL setup, SQL injection/XSS protection documentation (REQ20-REQ24)
