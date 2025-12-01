@@ -2,64 +2,56 @@ import { test, mock } from 'node:test'
 import assert from 'node:assert/strict'
 
 /**
- * Helper to create a fake Supabase client and import habitsService
- * with the fake wired in via module mocking.
+ * Helper to import habitsService and patch supabaseAdmin.from
+ * so we don't talk to a real Supabase instance.
  */
-async function createHabitsServiceWithMock({ habitsRows, statsRows, statsShouldError = false } = {}) {
-  const fakeSupabaseAdmin = {
-    from(table) {
-      if (table === 'habits') {
-        const query = {
-          select() {
-            return this
-          },
-          order() {
-            return this
-          },
-          eq() {
-            // When user_id filter is applied, we just return the same rows
-            return Promise.resolve({ data: habitsRows, error: null })
-          },
-        }
-        return query
-      }
-
-      if (table === 'habit_stats') {
-        const query = {
-          select() {
-            return this
-          },
-          eq() {
-            return this
-          },
-          in() {
-            if (statsShouldError) {
-              return Promise.resolve({ data: null, error: new Error('stats failed') })
-            }
-            return Promise.resolve({ data: statsRows, error: null })
-          },
-        }
-        return query
-      }
-
-      throw new Error(`Unexpected table: ${table}`)
-    },
-  }
-
+async function setupHabitsServiceMock({ habitsRows, statsRows, statsShouldError = false } = {}) {
   // Ensure env vars are present so supabaseAdmin is created
   process.env.SUPABASE_URL = 'https://example.test'
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'dummy-key'
 
-  // Mock the Supabase client factory used in config/supabaseClient.js
-  mock.module('@supabase/supabase-js', () => ({
-    createClient() {
-      return fakeSupabaseAdmin
-    },
-  }))
-
-  // Dynamic import so the mocked module is used
+  // Import the real supabaseAdmin instance and the service under test
+  const { supabaseAdmin } = await import('../config/supabaseClient.js')
   const habitsService = await import('../services/habitsService.js')
-  return { habitsService, fakeSupabaseAdmin }
+
+  // Mock only the "from" method on the existing supabaseAdmin
+  mock.method(supabaseAdmin, 'from', (table) => {
+    if (table === 'habits') {
+      return {
+        select() {
+          return this
+        },
+        order() {
+          return this
+        },
+        eq() {
+          // When user_id filter is applied, we just return the same rows
+          return Promise.resolve({ data: habitsRows, error: null })
+        },
+      }
+    }
+
+    if (table === 'habit_stats') {
+      return {
+        select() {
+          return this
+        },
+        eq() {
+          return this
+        },
+        in() {
+          if (statsShouldError) {
+            return Promise.resolve({ data: null, error: new Error('stats failed') })
+          }
+          return Promise.resolve({ data: statsRows, error: null })
+        },
+      }
+    }
+
+    throw new Error(`Unexpected table: ${table}`)
+  })
+
+  return { habitsService }
 }
 
 test('listHabits returns merged habits with stats for a user', async () => {
@@ -78,7 +70,7 @@ test('listHabits returns merged habits with stats for a user', async () => {
     },
   ]
 
-  const { habitsService } = await createHabitsServiceWithMock({
+  const { habitsService } = await setupHabitsServiceMock({
     habitsRows,
     statsRows,
   })
@@ -117,7 +109,7 @@ test('listHabits degrades gracefully when stats query fails', async () => {
     { id: 1, name: 'Exercise', description: 'Run 5km', created_at: '2025-01-01' },
   ]
 
-  const { habitsService } = await createHabitsServiceWithMock({
+  const { habitsService } = await setupHabitsServiceMock({
     habitsRows,
     statsRows: null,
     statsShouldError: true,
