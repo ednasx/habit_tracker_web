@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "echo \"No frontend tests yet\""
+    "test": "echo \"UI Testing not required as per requirement 5 (REQ5)\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.82.0",

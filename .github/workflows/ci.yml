@@ -14,21 +14,21 @@ jobs:
         working-directory: frontend
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 #Downloads the entire contents of your Git repository onto the runner.
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4 #Sets up the Node.js environment on the runner.
         with:
-          node-version: 22
+          node-version: 22 #Specifies the version of Node.js to use.
 
       - name: Install dependencies
-        run: npm install
+        run: npm install #Installs the dependencies for the project.
 
       - name: Build frontend
-        run: npm run build
+        run: npm run build #Builds the frontend of the project.
 
       - name: Run frontend tests
-        run: npm test
+        run: npm test #Runs the tests for the frontend of the project.
 
   habit-service:
     runs-on: ubuntu-latest
@@ -37,20 +37,20 @@ jobs:
         working-directory: habit-service
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 #Downloads the entire contents of your Git repository onto the runner.
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4 #Sets up the Node.js environment on the runner.
         with:
-          node-version: 22
+          node-version: 22 #Specifies the version of Node.js to use.
 
       - name: Install dependencies
-        run: npm install
+        run: npm install #Installs the dependencies for the project.
 
       - name: Run habit-service tests
-        run: npm test
+        run: npm test #Runs the tests for all test files under habit-service/tests/.
         env:
-          NODE_ENV: test
+          NODE_ENV: test #Sets the environment variable for the project.
 
   user-service:
     runs-on: ubuntu-latest
