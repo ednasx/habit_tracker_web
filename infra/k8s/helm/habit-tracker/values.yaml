@@ -2,20 +2,20 @@ namespace: habit-dev
 
 frontend:
   # image: your-docker-registry/habit-frontend:latest
-  image: brandonchongwenjun/habit-frontend:d0758b7
+  image: brandonchongwenjun/habit-frontend:5145d34
   port: 5173
 
 habitService:
-  image: brandonchongwenjun/habit-service:d0758b7
+  image: brandonchongwenjun/habit-service:5145d34
   port: 4000
 
 userService:
-  image: brandonchongwenjun/user-service:d0758b7
+  image: brandonchongwenjun/user-service:5145d34
   port: 4001
 
 analytics:
   # image: your-docker-registry/habit-analytics:latest
-  image: brandonchongwenjun/habit-analytics:d0758b7
+  image: brandonchongwenjun/habit-analytics:5145d34
 
 rabbitmq:
   image: rabbitmq:3-management
