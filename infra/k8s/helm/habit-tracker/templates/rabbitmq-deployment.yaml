@@ -17,6 +17,7 @@ spec:
       containers:
         - name: rabbitmq
           image: {{ .Values.rabbitmq.image }}
+          imagePullPolicy: Always
           env:
             - name: RABBITMQ_DEFAULT_USER
               value: {{ .Values.rabbitmq.username | quote }}
