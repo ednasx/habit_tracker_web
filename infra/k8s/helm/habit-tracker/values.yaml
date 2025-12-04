@@ -2,7 +2,7 @@ namespace: habit-dev
 
 frontend:
   # image: your-docker-registry/habit-frontend:latest
-  image: brandonchongwenjun/habit-frontend:5145d34
+  image: brandonchongwenjun/habit-frontend:aa61e58
   port: 80
 
 habitService:
