@@ -1,0 +1,31 @@
+# Exclude Dockerfile itself
+Dockerfile
+.dockerignore
+
+# Exclude build artifacts
+dist/
+node_modules/
+npm-debug.log*
+
+# Exclude development files
+.env.local
+.env.development
+.env.test
+
+# Exclude git files
+.git/
+.gitignore
+
+# Exclude documentation
+README.md
+*.md
+
+# Exclude CI/CD configs (if any)
+.github/
+
+# Exclude test files (optional, but good practice)
+**/*.test.js
+**/*.test.jsx
+**/*.spec.js
+**/*.spec.jsx
+
