@@ -161,47 +161,40 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Pull latest - allow "already up to date" but fail on conflicts
-          set +e  # Don't exit on error immediately
-          pull_output=$(git pull --rebase origin main 2>&1)
-          pull_status=$?
-          set -e  # Exit on error again
-          
-          if [ $pull_status -eq 0 ]; then
-            echo "✅ Pulled latest changes"
-          elif echo "$pull_output" | grep -qE "(Already up to date|is up to date)"; then
-            echo "ℹ️ Repository already up to date - continuing"
-          elif echo "$pull_output" | grep -qE "(CONFLICT|conflict|merge)"; then
-            echo "❌ ERROR: Merge/rebase conflict detected!"
-            echo "$pull_output"
-            git rebase --abort 2>/dev/null || true
-            exit 1
-          else
-            echo "⚠️ WARNING: Unexpected pull result (exit $pull_status)"
-            echo "$pull_output"
-            # For network issues, we might want to continue
-            # For other issues, fail
-            if echo "$pull_output" | grep -qE "(fatal|error|failed)"; then
-              echo "❌ Fatal error detected - failing workflow"
-              exit 1
-            fi
-          fi
-          
+          # Check if values.yaml was modified by the Python script
           if git diff --quiet infra/k8s/helm/habit-tracker/values.yaml; then
-            echo "No changes to values.yaml"
+            echo "No changes to values.yaml - skipping commit"
           else
+            echo "values.yaml was modified - staging changes"
             git add infra/k8s/helm/habit-tracker/values.yaml
+            
+            # Pull before committing to get latest changes
+            # Staged changes are preserved during rebase
+            echo "Pulling latest changes from main..."
+            git pull --rebase origin main || {
+              echo "❌ ERROR: Failed to pull before commit"
+              echo "This might indicate a conflict with values.yaml"
+              exit 1
+            }
+            
+            # Commit the staged changes
+            echo "Committing updated values.yaml"
             git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]"
             
-            # Pull again before push - fail on any error
+            # Pull again before push (in case someone else pushed in the meantime)
+            echo "Pulling again before push to ensure we're up to date..."
             git pull --rebase origin main || {
               echo "❌ ERROR: Failed to pull before push"
               exit 1
             }
             
+            # Push the commit
+            echo "Pushing commit to main..."
             git push || {
               echo "❌ ERROR: Failed to push"
               exit 1
             }
+            
+            echo "✅ Successfully updated and pushed values.yaml"
           fi
 
