@@ -4,6 +4,9 @@ on:
   push:
     branches: [ main ]
     # Only run on pushes to main (assumes CI has passed via branch protection or manual verification)
+  
+permissions:
+  contents: write #needed to update values.yaml
 
 jobs:
   build-and-deploy:
@@ -44,6 +47,8 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
+          build-args: |
+            VITE_API_BASE_URL=/api
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/habit-frontend:${{ github.sha }},${{ secrets.DOCKERHUB_USERNAME }}/habit-frontend:latest
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/habit-frontend:latest
           cache-to: type=inline
