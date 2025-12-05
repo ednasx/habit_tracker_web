@@ -8,9 +8,16 @@ on:
 permissions:
   contents: write #needed to update values.yaml
 
+concurrency:
+  group: cd-deploy-${{ github.ref }}
+  cancel-in-progress: false  # Wait for current run to finish
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
+    #prevent infinite loop - skip if this commit was made by CD workflow
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     
     steps:
       - name: Checkout repository
@@ -27,19 +34,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/habit-frontend
-            ${{ secrets.DOCKERHUB_USERNAME }}/habit-service
-            ${{ secrets.DOCKERHUB_USERNAME }}/user-service
-            ${{ secrets.DOCKERHUB_USERNAME }}/habit-analytics
-          tags: |
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -89,54 +83,88 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
           DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          # Use Python to update YAML (more reliable than sed)
           python3 << 'PYTHON_SCRIPT'
-          import re
+          import yaml
           import os
-          
+          import sys
+
           values_file = os.environ['VALUES_FILE']
           commit_sha = os.environ['COMMIT_SHA']
           docker_user = os.environ['DOCKER_USER']
-          
-          with open(values_file, "r") as f:
-              content = f.read()
-          
-          # Update each image tag
-          content = re.sub(
-              r'image: ' + re.escape(docker_user) + r'/habit-frontend:.*',
-              f'image: {docker_user}/habit-frontend:{commit_sha}',
-              content
-          )
-          content = re.sub(
-              r'image: ' + re.escape(docker_user) + r'/habit-service:.*',
-              f'image: {docker_user}/habit-service:{commit_sha}',
-              content
-          )
-          content = re.sub(
-              r'image: ' + re.escape(docker_user) + r'/user-service:.*',
-              f'image: {docker_user}/user-service:{commit_sha}',
-              content
-          )
-          content = re.sub(
-              r'image: ' + re.escape(docker_user) + r'/habit-analytics:.*',
-              f'image: {docker_user}/habit-analytics:{commit_sha}',
-              content
-          )
-          
-          with open(values_file, "w") as f:
-              f.write(content)
-          
-          print(f"Updated values.yaml with commit SHA: {commit_sha}")
+
+          # Validate inputs
+          if not commit_sha or not docker_user:
+              print("ERROR: COMMIT_SHA or DOCKER_USER is missing", file=sys.stderr)
+              sys.exit(1)
+
+          # Check if file exists
+          if not os.path.exists(values_file):
+              print(f"ERROR: File not found: {values_file}", file=sys.stderr)
+              sys.exit(1)
+
+          # Read YAML with error handling
+          try:
+              with open(values_file, "r") as f:
+                  data = yaml.safe_load(f)
+              if data is None:
+                  print("ERROR: Failed to parse YAML - file may be empty", file=sys.stderr)
+                  sys.exit(1)
+          except yaml.YAMLError as e:
+              print(f"ERROR: Invalid YAML in {values_file}: {e}", file=sys.stderr)
+              sys.exit(1)
+          except IOError as e:
+              print(f"ERROR: Failed to read {values_file}: {e}", file=sys.stderr)
+              sys.exit(1)
+
+          # Track updates
+          updates = []
+
+          # Update image tags with validation
+          try:
+              if 'frontend' in data and 'image' in data['frontend']:
+                  data['frontend']['image'] = f'{docker_user}/habit-frontend:{commit_sha}'
+                  updates.append('frontend')
+              
+              if 'habitService' in data and 'image' in data['habitService']:
+                  data['habitService']['image'] = f'{docker_user}/habit-service:{commit_sha}'
+                  updates.append('habitService')
+              
+              if 'userService' in data and 'image' in data['userService']:
+                  data['userService']['image'] = f'{docker_user}/user-service:{commit_sha}'
+                  updates.append('userService')
+              
+              if 'analytics' in data and 'image' in data['analytics']:
+                  data['analytics']['image'] = f'{docker_user}/habit-analytics:{commit_sha}'
+                  updates.append('analytics')
+          except KeyError as e:
+              print(f"ERROR: Missing expected key in YAML: {e}", file=sys.stderr)
+              sys.exit(1)
+
+          if not updates:
+              print("ERROR: No image tags were updated", file=sys.stderr)
+              sys.exit(1)
+
+          # Write YAML with error handling
+          try:
+              with open(values_file, "w") as f:
+                  yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+          except IOError as e:
+              print(f"ERROR: Failed to write {values_file}: {e}", file=sys.stderr)
+              sys.exit(1)
+
+          print(f"✅ Successfully updated {len(updates)} service(s): {', '.join(updates)}")
+          print(f"   Commit SHA: {commit_sha}")
           PYTHON_SCRIPT
-          
-          echo "Updated values.yaml:"
-          cat "$VALUES_FILE"
 
       - name: Commit and push updated values.yaml
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+
           
+          # Pull latest to get any updates from previous workflow runs
+          git pull --rebase origin main || true
+
           if git diff --quiet infra/k8s/helm/habit-tracker/values.yaml; then
             echo "No changes to values.yaml"
           else
