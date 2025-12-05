@@ -8,7 +8,15 @@ RUN npm install
 
 COPY . .
 
-ENV VITE_API_BASE_URL=/api
+# Accept build arguments for Vite environment variables
+ARG VITE_API_BASE_URL=/api
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+# Set as environment variables (Vite reads from env vars at build time)
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
 RUN npm run build  # ← Build static files
 
