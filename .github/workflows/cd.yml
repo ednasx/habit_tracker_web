@@ -161,37 +161,28 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # Check if values.yaml was modified by the Python script
+          # Check if values.yaml was modified
           if git diff --quiet infra/k8s/helm/habit-tracker/values.yaml; then
             echo "No changes to values.yaml - skipping commit"
           else
-            echo "values.yaml was modified - staging changes"
+            echo "values.yaml was modified - committing changes"
+            
+            # 1. Stage and Commit FIRST (This creates a clean working directory)
             git add infra/k8s/helm/habit-tracker/values.yaml
-            
-            # Pull before committing to get latest changes
-            # Staged changes are preserved during rebase
-            echo "Pulling latest changes from main..."
-            git pull --rebase origin main || {
-              echo "❌ ERROR: Failed to pull before commit"
-              echo "This might indicate a conflict with values.yaml"
-              exit 1
-            }
-            
-            # Commit the staged changes
-            echo "Committing updated values.yaml"
             git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]"
             
-            # Pull again before push (in case someone else pushed in the meantime)
-            echo "Pulling again before push to ensure we're up to date..."
+            # 2. Pull with Rebase (Safe now because we have committed)
+            # This puts our new commit ON TOP of whatever is currently in main
+            echo "Pulling latest changes from main..."
             git pull --rebase origin main || {
-              echo "❌ ERROR: Failed to pull before push"
+              echo "❌ ERROR: Failed to pull/rebase. Merge conflict detected."
               exit 1
             }
             
-            # Push the commit
+            # 3. Push
             echo "Pushing commit to main..."
-            git push || {
-              echo "❌ ERROR: Failed to push"
+            git push origin main || {
+              echo "❌ ERROR: Failed to push. Remote has changed since pull."
               exit 1
             }
             
