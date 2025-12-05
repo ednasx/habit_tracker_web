@@ -1,0 +1,207 @@
+name: CD - Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+    # Only run on pushes to main (assumes CI has passed via branch protection or manual verification)
+  
+permissions:
+  contents: write #needed to update values.yaml
+
+concurrency:
+  group: cd-deploy-${{ github.ref }}
+  cancel-in-progress: false  # Wait for current run to finish
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    #prevent infinite loop - skip if this commit was made by CD workflow
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=/api
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/habit-frontend:${{ github.sha }},${{ secrets.DOCKERHUB_USERNAME }}/habit-frontend:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/habit-frontend:latest
+          cache-to: type=inline
+
+      - name: Build and push habit-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./habit-service
+          file: ./habit-service/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/habit-service:${{ github.sha }},${{ secrets.DOCKERHUB_USERNAME }}/habit-service:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/habit-service:latest
+          cache-to: type=inline
+
+      - name: Build and push user-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./user-service
+          file: ./user-service/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/user-service:${{ github.sha }},${{ secrets.DOCKERHUB_USERNAME }}/user-service:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/user-service:latest
+          cache-to: type=inline
+
+      - name: Build and push analytics-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./analytics-service
+          file: ./analytics-service/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/habit-analytics:${{ github.sha }},${{ secrets.DOCKERHUB_USERNAME }}/habit-analytics:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/habit-analytics:latest
+          cache-to: type=inline
+
+      - name: Update Helm values.yaml with new image tags
+        env:
+          VALUES_FILE: infra/k8s/helm/habit-tracker/values.yaml
+          COMMIT_SHA: ${{ github.sha }}
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import yaml
+          import os
+          import sys
+
+          values_file = os.environ['VALUES_FILE']
+          commit_sha = os.environ['COMMIT_SHA']
+          docker_user = os.environ['DOCKER_USER']
+
+          # Validate inputs
+          if not commit_sha or not docker_user:
+              print("ERROR: COMMIT_SHA or DOCKER_USER is missing", file=sys.stderr)
+              sys.exit(1)
+
+          # Check if file exists
+          if not os.path.exists(values_file):
+              print(f"ERROR: File not found: {values_file}", file=sys.stderr)
+              sys.exit(1)
+
+          # Read YAML with error handling
+          try:
+              with open(values_file, "r") as f:
+                  data = yaml.safe_load(f)
+              if data is None:
+                  print("ERROR: Failed to parse YAML - file may be empty", file=sys.stderr)
+                  sys.exit(1)
+          except yaml.YAMLError as e:
+              print(f"ERROR: Invalid YAML in {values_file}: {e}", file=sys.stderr)
+              sys.exit(1)
+          except IOError as e:
+              print(f"ERROR: Failed to read {values_file}: {e}", file=sys.stderr)
+              sys.exit(1)
+
+          # Track updates
+          updates = []
+
+          # Update image tags with validation
+          try:
+              if 'frontend' in data and 'image' in data['frontend']:
+                  data['frontend']['image'] = f'{docker_user}/habit-frontend:{commit_sha}'
+                  updates.append('frontend')
+              
+              if 'habitService' in data and 'image' in data['habitService']:
+                  data['habitService']['image'] = f'{docker_user}/habit-service:{commit_sha}'
+                  updates.append('habitService')
+              
+              if 'userService' in data and 'image' in data['userService']:
+                  data['userService']['image'] = f'{docker_user}/user-service:{commit_sha}'
+                  updates.append('userService')
+              
+              if 'analytics' in data and 'image' in data['analytics']:
+                  data['analytics']['image'] = f'{docker_user}/habit-analytics:{commit_sha}'
+                  updates.append('analytics')
+          except KeyError as e:
+              print(f"ERROR: Missing expected key in YAML: {e}", file=sys.stderr)
+              sys.exit(1)
+
+          if not updates:
+              print("ERROR: No image tags were updated", file=sys.stderr)
+              sys.exit(1)
+
+          # Write YAML with error handling
+          try:
+              with open(values_file, "w") as f:
+                  yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+          except IOError as e:
+              print(f"ERROR: Failed to write {values_file}: {e}", file=sys.stderr)
+              sys.exit(1)
+
+          print(f"✅ Successfully updated {len(updates)} service(s): {', '.join(updates)}")
+          print(f"   Commit SHA: {commit_sha}")
+          PYTHON_SCRIPT
+
+      - name: Commit and push updated values.yaml
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Pull latest - allow "already up to date" but fail on conflicts
+          set +e  # Don't exit on error immediately
+          pull_output=$(git pull --rebase origin main 2>&1)
+          pull_status=$?
+          set -e  # Exit on error again
+          
+          if [ $pull_status -eq 0 ]; then
+            echo "✅ Pulled latest changes"
+          elif echo "$pull_output" | grep -qE "(Already up to date|is up to date)"; then
+            echo "ℹ️ Repository already up to date - continuing"
+          elif echo "$pull_output" | grep -qE "(CONFLICT|conflict|merge)"; then
+            echo "❌ ERROR: Merge/rebase conflict detected!"
+            echo "$pull_output"
+            git rebase --abort 2>/dev/null || true
+            exit 1
+          else
+            echo "⚠️ WARNING: Unexpected pull result (exit $pull_status)"
+            echo "$pull_output"
+            # For network issues, we might want to continue
+            # For other issues, fail
+            if echo "$pull_output" | grep -qE "(fatal|error|failed)"; then
+              echo "❌ Fatal error detected - failing workflow"
+              exit 1
+            fi
+          fi
+          
+          if git diff --quiet infra/k8s/helm/habit-tracker/values.yaml; then
+            echo "No changes to values.yaml"
+          else
+            git add infra/k8s/helm/habit-tracker/values.yaml
+            git commit -m "chore: update image tags to ${{ github.sha }} [skip ci]"
+            
+            # Pull again before push - fail on any error
+            git pull --rebase origin main || {
+              echo "❌ ERROR: Failed to pull before push"
+              exit 1
+            }
+            
+            git push || {
+              echo "❌ ERROR: Failed to push"
+              exit 1
+            }
+          fi
+

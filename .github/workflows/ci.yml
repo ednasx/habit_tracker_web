@@ -9,6 +9,7 @@ on:
 jobs:
   frontend:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
       run:
         working-directory: frontend
@@ -32,6 +33,7 @@ jobs:
 
   habit-service:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
       run:
         working-directory: habit-service
@@ -54,6 +56,7 @@ jobs:
 
   user-service:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
       run:
         working-directory: user-service
@@ -77,6 +80,7 @@ jobs:
 
   analytics-service:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
       run:
         working-directory: analytics-service
