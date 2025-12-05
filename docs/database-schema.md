@@ -48,7 +48,64 @@ Unique constraint idea:
 
 ---
 
-## 4. Suggested SQL (Supabase SQL editor)
+## 4. user_profiles
+
+Stores user profile information including unique username for friend discovery.
+
+| Column       | Type        | Constraints                               | Notes                    |
+|-------------|-------------|-------------------------------------------|-------------------------|
+| user_id     | uuid        | PK, FK → auth.users.id ON DELETE CASCADE  | Reference to auth user  |
+| username    | text        | UNIQUE, NOT NULL                          | Unique username for friend lookups |
+| display_name| text        | NULL                                      | Optional display name   |
+| created_at  | timestamptz | DEFAULT now()                             |                         |
+| updated_at  | timestamptz | DEFAULT now()                             |                         |
+
+**Username constraints:**
+- 3-20 characters
+- Lowercase alphanumeric, underscores, hyphens only
+- Must be unique across all users
+
+---
+
+## 5. friends
+
+Manages friend relationships with request/acceptance flow.
+
+| Column       | Type        | Constraints                               | Notes                    |
+|-------------|-------------|-------------------------------------------|-------------------------|
+| user_id     | uuid        | FK → auth.users.id ON DELETE CASCADE      | User who sent request   |
+| friend_id   | uuid        | FK → auth.users.id ON DELETE CASCADE      | User who receives request |
+| status      | text        | NOT NULL, CHECK IN ('pending', 'accepted', 'rejected') | Request status |
+| created_at  | timestamptz | DEFAULT now()                             | When request was sent   |
+| updated_at  | timestamptz | DEFAULT now()                             | When status changed     |
+
+**Primary key:** `(user_id, friend_id)`
+
+**Friend request flow:**
+1. User A sends friend request to User B → status = 'pending'
+2. User B accepts → status = 'accepted' (both can see each other)
+3. User B rejects → status = 'rejected'
+
+---
+
+## 6. habit_stats
+
+Statistics for habit tracking analytics.
+
+| Column              | Type        | Constraints                               | Notes                    |
+|--------------------|-------------|-------------------------------------------|-------------------------|
+| habit_id           | bigint      | FK → habits.id ON DELETE CASCADE          |                         |
+| user_id            | uuid        | FK → auth.users.id ON DELETE CASCADE      |                         |
+| total_completions  | integer     | NOT NULL DEFAULT 0                        |                         |
+| current_streak     | integer     | NOT NULL DEFAULT 0                        |                         |
+| longest_streak     | integer     | NOT NULL DEFAULT 0                        |                         |
+| last_completed_date| date        | NULL                                      |                         |
+
+**Primary key:** `(habit_id, user_id)`
+
+---
+
+## 7. Suggested SQL (Supabase SQL editor)
 
 ```sql
 -- users (optional if you rely only on auth.users)
@@ -89,13 +146,26 @@ create table public.habit_stats (
 
 create table if not exists public.user_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
+  username text unique not null,
   display_name text,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
+-- Index for faster username lookups
+create index if not exists idx_user_profiles_username on public.user_profiles(username);
+
+-- Friend requests with status tracking
 create table if not exists public.friends (
   user_id uuid references auth.users(id) on delete cascade,
   friend_id uuid references auth.users(id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'rejected')),
   created_at timestamptz default now(),
+  updated_at timestamptz default now(),
   primary key (user_id, friend_id)
 );
+
+-- Index for faster friend lookups
+create index if not exists idx_friends_user_id on public.friends(user_id);
+create index if not exists idx_friends_friend_id on public.friends(friend_id);
+create index if not exists idx_friends_status on public.friends(status);
