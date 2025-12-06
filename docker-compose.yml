@@ -64,8 +64,13 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     ports:
-      - "5672:5672"    # AMQP (backend uses this)
-      - "15672:15672"  # Management UI
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   analytics-service:
     build: ./analytics-service
@@ -73,7 +78,8 @@ services:
     env_file:
       - analytics-service/.env
     environment:
-      # IMPORTANT: override any localhost value from .env
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
+
