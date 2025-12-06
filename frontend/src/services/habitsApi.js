@@ -48,3 +48,10 @@ export function logHabitCompletionToday(id) {
     body: JSON.stringify({}),
   }, HABIT_API_BASE);
 }
+
+export function getFriendsLeaderboard(limit = 10) {
+  const query = typeof limit === 'number' ? `?limit=${limit}` : '';
+  return apiRequest(`/leaderboard/friends${query}`, {
+    method: 'GET',
+  }, HABIT_API_BASE);
+}
