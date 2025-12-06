@@ -15,29 +15,34 @@ Ensure you run `docker compose up --build` to start the Nginx container along wi
 *   [ ] **Test Coverage**: Ensure `habit-service` and `user-service` both have >50% test coverage.
 
 
-## 3. Automated CI/CD Pipeline (Future Enhancement) 🚀
+## 3. Automated CI/CD Pipeline ✅
 
-Currently, when you change application code, you must manually:
-1. Build Docker images
-2. Push to Docker Hub
-3. Argo CD detects image changes (if using image tags)
+**Status**: ✅ **IMPLEMENTED**
 
-**Goal**: Automate this process so code changes automatically trigger builds and deployments.
+The CI/CD pipeline is now fully automated! See `.github/workflows/cd.yml` for the implementation.
 
-### Implementation Plan
+### How It Works
 
-**GitHub Actions Workflow** (`.github/workflows/cd.yml`):
-1. **Trigger**: On push to `main` branch (or merge to main)
+1. **Trigger**: On push to `main` branch
 2. **Build Stage**:
-   - Build Docker images for all services (`habit-service`, `user-service`, `analytics-service`, `frontend`)
-   - Tag images with Git commit SHA: `YOUR_USERNAME/habit-service:${GITHUB_SHA}`
-   - Push to Docker Hub
+   - Builds Docker images for all services (`habit-service`, `user-service`, `analytics-service`, `frontend`)
+   - Tags images with Git commit SHA: `YOUR_USERNAME/service-name:${GITHUB_SHA}`
+   - Also tags with `latest` for convenience
+   - Pushes to Docker Hub
 3. **Update Helm Values**:
-   - Update `infra/k8s/helm/habit-tracker/values.yaml` with new image tags
-   - Commit and push back to Git
+   - Automatically updates `infra/k8s/helm/habit-tracker/values.yaml` with new image tags
+   - Commits and pushes the update back to Git
 4. **Argo CD Sync**:
    - Argo CD automatically detects Git change
-   - Pulls new images and redeploys
+   - Pulls new images and redeploys pods
+
+### Setup Required
+
+**GitHub Secrets** (Repository Settings → Secrets and variables → Actions):
+- `DOCKERHUB_USERNAME`: Your Docker Hub username
+- `DOCKERHUB_TOKEN`: Your Docker Hub access token
+
+See `.github/workflows/README.md` for detailed setup instructions.
 
 ### Benefits
 - ✅ No manual `docker build`/`docker push` commands

@@ -37,3 +37,8 @@ spec:
                 secretKeyRef:
                   name: {{ .Release.Name }}-supabase
                   key: SUPABASE_SERVICE_ROLE_KEY
+            - name: SUPABASE_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-supabase
+                  key: SUPABASE_JWT_SECRET
