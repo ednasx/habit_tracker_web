@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   # API Gateway for Local Dev
   nginx:
@@ -10,12 +12,16 @@ services:
     depends_on:
       - habit-service
       - user-service
+      - analytics-service
 
   habit-service:
     build: ./habit-service
     container_name: habit-service
     env_file:
       - habit-service/.env
+    environment:
+      # IMPORTANT: override any localhost value from .env
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
     ports:
       - "4000:4000"
     depends_on:
@@ -26,20 +32,29 @@ services:
     container_name: user-service
     env_file:
       - user-service/.env
+    # only add RABBITMQ_URL here if user-service actually uses RabbitMQ
     ports:
       - "4001:4001"
     depends_on:
       - rabbitmq
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
     container_name: habit-frontend
-    env_file:
-      - frontend/.env
-    ports:
-      - "5173:5173"
+    # optional: runtime env (not strictly needed for Vite, but harmless)
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+    expose:
+      - "80"
     depends_on:
-      - nginx
+      - habit-service
+      - user-service
+
 
 
   rabbitmq:
@@ -57,5 +72,8 @@ services:
     container_name: habit-analytics
     env_file:
       - analytics-service/.env
+    environment:
+      # IMPORTANT: override any localhost value from .env
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
     depends_on:
       - rabbitmq
