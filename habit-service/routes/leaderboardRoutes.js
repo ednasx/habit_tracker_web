@@ -1,21 +1,24 @@
-import { Router } from 'express'
-import { getFriendsLeaderboard } from '../services/leaderboardService.js'
+// habit-service/routes/leaderboardRoutes.js
+import { Router } from 'express';
+import { getFriendsLeaderboard } from '../services/leaderboardService.js';
 
-const router = Router()
+const router = Router();
 
 router.get('/friends', async (req, res) => {
-  const userId = req.user?.id
+  const userId = req.user?.id;
   if (!userId) {
-    return res.status(401).json({ message: 'User not authenticated' })
+    return res.status(401).json({ message: 'User not authenticated' });
   }
+
+  const limit = Number.parseInt(req.query.limit, 10) || 10;
 
   try {
-    const leaderboard = await getFriendsLeaderboard(userId)
-    res.json(leaderboard)
+    const leaderboard = await getFriendsLeaderboard(userId, limit);
+    res.json(leaderboard);
   } catch (err) {
-    console.error('[leaderboard] GET /friends error:', err.message)
-    res.status(500).json({ message: 'Failed to load leaderboard' })
+    console.error('[leaderboard] GET /friends error:', err);
+    res.status(500).json({ message: 'Failed to load leaderboard' });
   }
-})
+});
 
-export default router
+export default router;
