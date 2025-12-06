@@ -1,0 +1,220 @@
+/* Leaderboard card styling */
+.leaderboard-card {
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+/* Header with subtle gradient */
+.leaderboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.25rem 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.04),
+    rgba(56, 189, 248, 0.02)
+  );
+  border-radius: 0.75rem;
+}
+
+/* "Your rank" pill on the header */
+.leaderboard-pill {
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.08);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 140px;
+}
+
+.leaderboard-pill .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+.leaderboard-pill .value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.leaderboard-pill .sub {
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+/* List */
+.leaderboard-list {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Each row */
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.75rem;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.leaderboard-row:hover {
+  background: rgba(15, 23, 42, 0.02);
+  transform: translateY(-1px);
+}
+
+/* Highlight current user */
+.leaderboard-row--self {
+  background: rgba(56, 189, 248, 0.08);
+}
+
+/* Rank / medal */
+.leaderboard-rank {
+  width: 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.leaderboard-medal {
+  font-size: 1.25rem;
+}
+
+.leaderboard-rank-number {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+/* Avatar + name */
+.leaderboard-user {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.leaderboard-avatar {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6366f1, #0ea5e9);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaderboard-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  display: flex;
+  align-items: center;
+}
+
+.leaderboard-subline {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+/* "You" badge */
+.leaderboard-badge-you {
+  font-size: 0.7rem;
+  background: rgba(15, 23, 42, 0.9);
+  color: #f9fafb;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+
+/* Stats on the right side */
+.leaderboard-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.leaderboard-stat {
+  text-align: right;
+}
+
+.leaderboard-stat .label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+
+.leaderboard-stat .value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Loading skeleton */
+.leaderboard-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.leaderboard-row-skeleton {
+  display: grid;
+  grid-template-columns: 3rem 2.2rem 1fr 4rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.leaderboard-row-skeleton .shimmer {
+  height: 0.8rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(209, 213, 219, 0.4),
+    rgba(243, 244, 246, 0.9),
+    rgba(209, 213, 219, 0.4)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+}
+
+.leaderboard-row-skeleton .rank {
+  width: 1.5rem;
+}
+
+.leaderboard-row-skeleton .avatar {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+}
+
+.leaderboard-row-skeleton .name {
+  width: 60%;
+}
+
+.leaderboard-row-skeleton .stat {
+  width: 2.5rem;
+}
+
+/* Generic shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
