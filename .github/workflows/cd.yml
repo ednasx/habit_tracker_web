@@ -32,6 +32,8 @@ jobs:
           # Checkout the commit that triggered the CI workflow
           ref: ${{ github.event.workflow_run.head_sha }}
 
+      - name: Switch to main branch
+        run: git checkout -B main
       - name: Update Helm values.yaml with new image tags
         env:
           VALUES_FILE: infra/k8s/helm/habit-tracker/values.yaml
