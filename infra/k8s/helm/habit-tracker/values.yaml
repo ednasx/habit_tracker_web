@@ -1,15 +1,15 @@
 namespace: habit-dev
 frontend:
-  image: brandonchongwenjun/habit-frontend:0e520792dfbe41ac126df614b4d5d09ca0deb84a
+  image: brandonchongwenjun/habit-frontend:ddc08451d5db7e893f72be4cbe79f36ed41dbb8a
   port: 80
 habitService:
-  image: brandonchongwenjun/habit-service:0e520792dfbe41ac126df614b4d5d09ca0deb84a
+  image: brandonchongwenjun/habit-service:ddc08451d5db7e893f72be4cbe79f36ed41dbb8a
   port: 4000
 userService:
-  image: brandonchongwenjun/user-service:0e520792dfbe41ac126df614b4d5d09ca0deb84a
+  image: brandonchongwenjun/user-service:ddc08451d5db7e893f72be4cbe79f36ed41dbb8a
   port: 4001
 analytics:
-  image: brandonchongwenjun/habit-analytics:0e520792dfbe41ac126df614b4d5d09ca0deb84a
+  image: brandonchongwenjun/habit-analytics:ddc08451d5db7e893f72be4cbe79f36ed41dbb8a
 rabbitmq:
   image: rabbitmq:3-management
   username: guest
