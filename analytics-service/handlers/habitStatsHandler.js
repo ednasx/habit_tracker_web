@@ -1,3 +1,4 @@
+// analytics-service/handlers/habitStatsHandler.js
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.SUPABASE_URL
@@ -13,12 +14,12 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
 
 /**
  * Handles habit.completed events by updating habit_stats table.
- * Called by the RabbitMQ consumer when a habit completion event is received.
+ * Only the first completion per (user, habit, date) should affect totals & streaks.
  *
- * @param {Object} event - Event payload from RabbitMQ
- * @param {string} event.userId - User ID who completed the habit
- * @param {number} event.habitId - Habit ID that was completed
- * @param {string} event.date - Date of completion (YYYY-MM-DD)
+ * @param {Object} event
+ * @param {string} event.userId
+ * @param {number} event.habitId
+ * @param {string} event.date - YYYY-MM-DD
  */
 export async function handleHabitCompleted(event) {
   const { userId, habitId, date } = event
@@ -28,7 +29,7 @@ export async function handleHabitCompleted(event) {
   }
 
   const eventDate = new Date(date) // expecting YYYY-MM-DD
-  const eventDateStr = date // already a date string
+  const eventDateStr = date
 
   // 1. Get existing stats row
   const { data: stats, error: statsError } = await supabaseAdmin
@@ -43,36 +44,60 @@ export async function handleHabitCompleted(event) {
     return
   }
 
-  let total = 1
-  let currentStreak = 1
-  let longestStreak = 1
-  let lastDate = eventDateStr
+  let total
+  let currentStreak
+  let longestStreak
+  let lastDate = stats?.last_completed_date || null
 
-  if (stats) {
-    total = (stats.total_completions || 0) + 1
+  if (!stats) {
+    // First-ever completion for this habit/user
+    total = 1
+    currentStreak = 1
+    longestStreak = 1
+    lastDate = eventDateStr
+  } else {
+    // Start from existing values
+    total = stats.total_completions || 0
+    currentStreak = stats.current_streak || 0
+    longestStreak = stats.longest_streak || 0
 
     const prevDateStr = stats.last_completed_date
+
     if (prevDateStr) {
       const prevDate = new Date(prevDateStr + 'T00:00:00Z')
       const diffDays =
         (eventDate - prevDate) / (1000 * 60 * 60 * 24)
 
       if (diffDays === 0) {
-        // Same day; don't change streak
-        currentStreak = stats.current_streak || 1
-      } else if (diffDays === 1) {
-        currentStreak = (stats.current_streak || 0) + 1
+        // Same calendar day as last completion:
+        // -> treat as duplicate click: DO NOT increment total or streaks
+        console.log(
+          `[Analytics] Ignoring duplicate completion for same day: user=${userId}, habit=${habitId}, date=${eventDateStr}`
+        )
+        // keep existing totals & streaks, keep lastDate as prevDateStr
+        lastDate = prevDateStr
       } else {
-        currentStreak = 1
+        // New day: this completion should count
+        total = total + 1
+
+        if (diffDays === 1) {
+          // Consecutive day -> increase streak
+          currentStreak = (currentStreak || 0) + 1
+        } else {
+          // Gap -> reset streak
+          currentStreak = 1
+        }
+
+        longestStreak = Math.max(longestStreak || 0, currentStreak)
+        lastDate = eventDateStr
       }
     } else {
+      // Stats row exists but no last_completed_date (edge case)
+      total = total + 1
       currentStreak = 1
+      longestStreak = Math.max(longestStreak || 0, 1)
+      lastDate = eventDateStr
     }
-
-    longestStreak = Math.max(
-      stats.longest_streak || 0,
-      currentStreak
-    )
   }
 
   // 2. Upsert stats row
@@ -94,8 +119,7 @@ export async function handleHabitCompleted(event) {
     console.error('[Analytics] Error upserting stats:', upsertError.message)
   } else {
     console.log(
-      `[Analytics] Updated stats: user=${userId}, habit=${habitId}, total=${total}, streak=${currentStreak}`
+      `[Analytics] Updated stats: user=${userId}, habit=${habitId}, total=${total}, currentStreak=${currentStreak}, longestStreak=${longestStreak}`
     )
   }
 }
-
