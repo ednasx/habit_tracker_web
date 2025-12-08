@@ -1,4 +1,11 @@
 import amqplib from 'amqplib'
+import { 
+  rabbitmqMessagesPublished, 
+  rabbitmqMessagesFailed,
+  rabbitmqChannelClosed 
+} from '../monitoring/metrics.js'
+
+const SERVICE_NAME = 'habit-service'
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672'
 const EXCHANGE_NAME = process.env.RABBITMQ_HABIT_EXCHANGE || 'habit.events'
@@ -47,6 +54,7 @@ async function connectRabbitMQ() {
 
     channel.on('close', () => {
       console.warn('[RabbitMQ] Channel closed')
+      rabbitmqChannelClosed.inc({ service: SERVICE_NAME })
       channel = null
     })
 
@@ -91,49 +99,93 @@ async function ensureChannel() {
 export async function publishHabitCreatedEvent(event) {
   if (process.env.NODE_ENV === 'test') return
 
+  const routingKey = 'habit.created'
+
   try {
     const ch = await ensureChannel()
     if (!ch) {
       console.warn('[RabbitMQ] Channel not ready, cannot publish habit.created event for habitId:', event.habitId)
+      rabbitmqMessagesFailed.inc({ 
+        exchange: EXCHANGE_NAME, 
+        routing_key: routingKey, 
+        service: SERVICE_NAME 
+      })
       return
     }
 
     const payload = Buffer.from(JSON.stringify(event))
-    const published = ch.publish(EXCHANGE_NAME, 'habit.created', payload, {
+    const published = ch.publish(EXCHANGE_NAME, routingKey, payload, {
       persistent: true,
     })
     
     if (!published) {
       console.warn('[RabbitMQ] Failed to publish habit.created event (buffer full) for habitId:', event.habitId)
+      rabbitmqMessagesFailed.inc({ 
+        exchange: EXCHANGE_NAME, 
+        routing_key: routingKey, 
+        service: SERVICE_NAME 
+      })
     } else {
       console.log('[RabbitMQ] Published habit.created event for habitId:', event.habitId)
+      rabbitmqMessagesPublished.inc({ 
+        exchange: EXCHANGE_NAME, 
+        routing_key: routingKey, 
+        service: SERVICE_NAME 
+      })
     }
   } catch (err) {
     console.error('[RabbitMQ] Failed to publish habit.created event for habitId:', event.habitId, 'Error:', err.message)
+    rabbitmqMessagesFailed.inc({ 
+      exchange: EXCHANGE_NAME, 
+      routing_key: routingKey, 
+      service: SERVICE_NAME 
+    })
   }
 }
 
 export async function publishHabitCompletedEvent(event) {
   if (process.env.NODE_ENV === 'test') return
 
+  const routingKey = 'habit.completed'
+
   try {
     const ch = await ensureChannel()
     if (!ch) {
       console.warn('[RabbitMQ] Channel not ready, cannot publish habit.completed event for habitId:', event.habitId, 'logId:', event.id)
+      rabbitmqMessagesFailed.inc({ 
+        exchange: EXCHANGE_NAME, 
+        routing_key: routingKey, 
+        service: SERVICE_NAME 
+      })
       return
     }
 
     const payload = Buffer.from(JSON.stringify(event))
-    const published = ch.publish(EXCHANGE_NAME, 'habit.completed', payload, {
+    const published = ch.publish(EXCHANGE_NAME, routingKey, payload, {
       persistent: true,
     })
     
     if (!published) {
       console.warn('[RabbitMQ] Failed to publish habit.completed event (buffer full) for habitId:', event.habitId, 'logId:', event.id)
+      rabbitmqMessagesFailed.inc({ 
+        exchange: EXCHANGE_NAME, 
+        routing_key: routingKey, 
+        service: SERVICE_NAME 
+      })
     } else {
       console.log('[RabbitMQ] Published habit.completed event for habitId:', event.habitId, 'logId:', event.id, 'date:', event.date)
+      rabbitmqMessagesPublished.inc({ 
+        exchange: EXCHANGE_NAME, 
+        routing_key: routingKey, 
+        service: SERVICE_NAME 
+      })
     }
   } catch (err) {
     console.error('[RabbitMQ] Failed to publish habit.completed event for habitId:', event.habitId, 'logId:', event.id, 'Error:', err.message)
+    rabbitmqMessagesFailed.inc({ 
+      exchange: EXCHANGE_NAME, 
+      routing_key: routingKey, 
+      service: SERVICE_NAME 
+    })
   }
 }

@@ -3,6 +3,10 @@ kind: Service
 metadata:
   name: user-service
   namespace: {{ .Values.namespace }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "4001"
+    prometheus.io/path: "/metrics"
 spec:
   selector:
     app: user-service

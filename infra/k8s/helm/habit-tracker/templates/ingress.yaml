@@ -34,6 +34,13 @@ spec:
                 name: user-service
                 port:
                   number: 4001
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: habit-tracker-grafana
+                port:
+                  number: 3000
           - path: /
             pathType: Prefix
             backend:

@@ -3,6 +3,10 @@ kind: Service
 metadata:
   name: habit-service
   namespace: {{ .Values.namespace }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "4000"
+    prometheus.io/path: "/metrics"
 spec:
   selector:
     app: habit-service

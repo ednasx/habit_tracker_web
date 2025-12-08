@@ -9,6 +9,8 @@ import YAML from 'yamljs'
 import leaderboardRouter from './routes/leaderboardRoutes.js'
 import { requireAuth } from './auth/authMiddleware.js'
 import habitsRouter from './routes/habitsRoutes.js'
+import { register } from './monitoring/metrics.js'
+import { metricsMiddleware } from './monitoring/middleware.js'
 
 dotenv.config()
 
@@ -30,6 +32,7 @@ try {
 const app = express()
 const PORT = process.env.PORT || 4000
 
+app.use(metricsMiddleware)
 app.use(helmet())
 app.use(cors())
 app.use(express.json())
@@ -44,6 +47,12 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', service: 'habit-backend' })
 })
 
+// Metrics endpoint for Prometheus (NOT protected by auth)
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType)
+  res.end(await register.metrics())
+})
+
 // Protected habits routes
 app.use('/api/habits', requireAuth, habitsRouter)
 
@@ -54,6 +63,7 @@ app.use('/api/leaderboard', requireAuth, leaderboardRouter)
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`[Server] Listening on port ${PORT}`)
+    console.log(`[Habit Service] Metrics available at http://localhost:${PORT}/metrics`)
   })
 }
 
