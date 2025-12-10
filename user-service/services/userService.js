@@ -260,7 +260,8 @@ export async function sendFriendRequest(userId, friendId) {
   const { data: existing, error: checkError } = await supabaseAdmin
     .from('friends')
     .select('user_id, friend_id, status')
-    .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`)
+    .in('user_id', [userId, friendId])
+    .in('friend_id', [userId, friendId])
     .maybeSingle()
 
   if (checkError) {
@@ -389,7 +390,8 @@ export async function removeFriendship(userId, friendId) {
   const { data, error } = await supabaseAdmin
     .from('friends')
     .delete()
-    .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`)
+    .in('user_id', [userId, friendId])
+    .in('friend_id', [userId, friendId])
     .eq('status', 'accepted')
     .select('user_id, friend_id')
 

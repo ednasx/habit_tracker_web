@@ -47,7 +47,7 @@ export async function handleHabitCompleted(event) {
   let total
   let currentStreak
   let longestStreak
-  let lastDate = stats?.last_completed_date || null
+  let lastDate
 
   if (!stats) {
     // First-ever completion for this habit/user
@@ -74,8 +74,8 @@ export async function handleHabitCompleted(event) {
         console.log(
           `[Analytics] Ignoring duplicate completion for same day: user=${userId}, habit=${habitId}, date=${eventDateStr}`
         )
-        // keep existing totals & streaks, keep lastDate as prevDateStr
-        lastDate = prevDateStr
+        // keep existing totals & streaks, but update lastDate to eventDateStr to reflect most recent completion
+        lastDate = eventDateStr
       } else {
         // New day: this completion should count
         total = total + 1

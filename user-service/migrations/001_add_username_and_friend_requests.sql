@@ -91,13 +91,34 @@ FOR INSERT
 WITH CHECK (auth.uid() = user_id);
 
 -- Users can update friend request status (accept/reject)
+-- Restrict friend request status updates to proper actors
 DROP POLICY IF EXISTS "Users can update friend request status" ON public.friends;
-CREATE POLICY "Users can update friend request status"
+
+-- Only the recipient can accept or reject a friend request
+CREATE POLICY "Recipient can accept or reject friend request"
 ON public.friends
 FOR UPDATE
-USING (auth.uid() = friend_id OR auth.uid() = user_id)
-WITH CHECK (auth.uid() = friend_id OR auth.uid() = user_id);
+USING (
+  auth.uid() = friend_id
+  AND status = 'pending'
+)
+WITH CHECK (
+  auth.uid() = friend_id
+  AND (status = 'accepted' OR status = 'rejected')
+);
 
+-- Only the requester can cancel their own pending friend request
+CREATE POLICY "Requester can cancel pending friend request"
+ON public.friends
+FOR UPDATE
+USING (
+  auth.uid() = user_id
+  AND status = 'pending'
+)
+WITH CHECK (
+  auth.uid() = user_id
+  AND status = 'cancelled'
+);
 -- Users can delete their friendships
 DROP POLICY IF EXISTS "Users can delete friendships" ON public.friends;
 CREATE POLICY "Users can delete friendships"

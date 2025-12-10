@@ -10,7 +10,7 @@ router.get('/friends', async (req, res) => {
     return res.status(401).json({ message: 'User not authenticated' });
   }
 
-  const limit = Number.parseInt(req.query.limit, 10) || 10;
+  const limit = Math.max(1, Math.min(100, Number.parseInt(req.query.limit, 10) || 10));
 
   try {
     const leaderboard = await getFriendsLeaderboard(userId, limit);

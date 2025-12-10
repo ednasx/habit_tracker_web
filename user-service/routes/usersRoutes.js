@@ -19,6 +19,9 @@ const router = Router()
 // GET /api/users/profile - Get current user's profile
 router.get('/profile', async (req, res) => {
   const userId = req.user?.id
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized: user not authenticated' })
+  }
   try {
     const profile = await getUserProfile(userId)
     if (!profile) {
@@ -33,6 +36,9 @@ router.get('/profile', async (req, res) => {
 // POST /api/users/profile - Create or update user profile (set username)
 router.post('/profile', async (req, res) => {
   const userId = req.user?.id
+  if (!userId) {
+    return res.status(401).json({ message: 'Authentication required' })
+  }
   const { username, display_name } = req.body
 
   if (!username) {
@@ -74,6 +80,9 @@ router.get('/search', async (req, res) => {
 // GET /api/users/friends - List accepted friends
 router.get('/friends', async (req, res) => {
   const userId = req.user?.id
+  if (!userId) {
+    return res.status(401).json({ message: 'Authentication required' })
+  }
   try {
     const friends = await listFriends(userId)
     res.json(friends)
@@ -86,6 +95,9 @@ router.get('/friends', async (req, res) => {
 // GET /api/users/friends/pending - List pending friend requests received
 router.get('/friends/pending', async (req, res) => {
   const userId = req.user?.id
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized: User not authenticated' })
+  }
   try {
     const requests = await listPendingFriendRequests(userId)
     res.json(requests)
@@ -98,6 +110,9 @@ router.get('/friends/pending', async (req, res) => {
 // GET /api/users/friends/sent - List sent friend requests
 router.get('/friends/sent', async (req, res) => {
   const userId = req.user?.id
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' })
+  }
   try {
     const requests = await listSentFriendRequests(userId)
     res.json(requests)

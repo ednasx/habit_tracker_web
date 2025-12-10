@@ -126,7 +126,7 @@ function App() {
   }
 
   // Logged in but no username set → show username setup
-  if (session && hasProfile === false) {
+  if (hasProfile === false) {
     return (
       <AppLayout 
         session={session} 
