@@ -1,5 +1,6 @@
 // habit-service/services/leaderboardService.js
 import { supabaseAdmin } from '../config/supabaseClient.js';
+import { validateUUID } from '../utils/validation.js';
 
 function ensureSupabaseConfigured() {
   if (!supabaseAdmin) {
@@ -18,10 +19,7 @@ export async function getFriendsLeaderboard(userId, limit = 10) {
   ensureSupabaseConfigured();
 
   // Validate userId is a valid UUID to prevent injection
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!userId || !uuidRegex.test(userId)) {
-    throw new Error('Invalid user ID format');
-  }
+  validateUUID(userId, 'user ID');
 
   // 1) Find accepted friendships involving this user
   const { data: friendRows, error: friendsError } = await supabaseAdmin
