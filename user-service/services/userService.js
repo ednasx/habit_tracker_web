@@ -129,12 +129,18 @@ export async function getUserByUsername(username) {
 }
 
 export async function listFriends(userId) {
+  // Validate userId is a valid UUID to prevent injection
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!userId || !uuidRegex.test(userId)) {
+    throw new Error('Invalid user ID format');
+  }
+
   // Get all accepted friendships (both directions)
   const { data, error } = await supabaseAdmin
     .from('friends')
     .select('friend_id, user_id, status, created_at')
-    .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
     .eq('status', 'accepted')
+    .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
 
   if (error) {
     throw new Error(error.message)

@@ -62,6 +62,11 @@ router.post('/profile', async (req, res) => {
 
 // GET /api/users/search?q=username - Search users by username
 router.get('/search', async (req, res) => {
+  const userId = req.user?.id
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' })
+  }
+
   const searchQuery = req.query.q
 
   if (!searchQuery) {

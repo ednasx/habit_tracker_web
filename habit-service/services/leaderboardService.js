@@ -17,12 +17,18 @@ function ensureSupabaseConfigured() {
 export async function getFriendsLeaderboard(userId, limit = 10) {
   ensureSupabaseConfigured();
 
+  // Validate userId is a valid UUID to prevent injection
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!userId || !uuidRegex.test(userId)) {
+    throw new Error('Invalid user ID format');
+  }
+
   // 1) Find accepted friendships involving this user
   const { data: friendRows, error: friendsError } = await supabaseAdmin
     .from('friends')
     .select('user_id, friend_id, status')
-    .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
-    .eq('status', 'accepted');
+    .eq('status', 'accepted')
+    .or(`user_id.eq.${userId},friend_id.eq.${userId}`);
 
   if (friendsError) {
     throw new Error(`Supabase friends error: ${friendsError.message}`);

@@ -26,8 +26,19 @@ ON public.user_profiles(username);
 -- ALTER TABLE public.user_profiles ALTER COLUMN username SET NOT NULL;
 
 -- Step 2: Update friends table to add status column for friend requests
+-- Add status column without default first
 ALTER TABLE public.friends
-ADD COLUMN IF NOT EXISTS status text DEFAULT 'pending';
+ADD COLUMN IF NOT EXISTS status text;
+
+-- Update existing friendships to 'accepted' status (if any exist)
+-- These are pre-existing friendships before the status system was added
+UPDATE public.friends
+SET status = 'accepted', updated_at = now()
+WHERE status IS NULL;
+
+-- Now set the default for new rows
+ALTER TABLE public.friends
+ALTER COLUMN status SET DEFAULT 'pending';
 
 -- Add updated_at column to friends table
 ALTER TABLE public.friends
@@ -37,11 +48,6 @@ ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 ALTER TABLE public.friends
 ADD CONSTRAINT friends_status_check 
 CHECK (status IN ('pending', 'accepted', 'rejected'));
-
--- Update existing friendships to 'accepted' status (if any exist)
-UPDATE public.friends
-SET status = 'accepted', updated_at = now()
-WHERE status = 'pending';
 
 -- Create indexes for faster friend queries
 CREATE INDEX IF NOT EXISTS idx_friends_user_id ON public.friends(user_id);
