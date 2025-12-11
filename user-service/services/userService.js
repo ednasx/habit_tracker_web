@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../config/supabaseClient.js'
+import { validateUUID } from '../utils/validation.js'
 
 // Username validation regex: 3-20 chars, lowercase alphanumeric, underscores, hyphens
 const USERNAME_REGEX = /^[a-z0-9_-]{3,20}$/
@@ -129,12 +130,15 @@ export async function getUserByUsername(username) {
 }
 
 export async function listFriends(userId) {
+  // Validate userId is a valid UUID to prevent injection
+  validateUUID(userId, 'user ID');
+
   // Get all accepted friendships (both directions)
   const { data, error } = await supabaseAdmin
     .from('friends')
     .select('friend_id, user_id, status, created_at')
-    .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
     .eq('status', 'accepted')
+    .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
 
   if (error) {
     throw new Error(error.message)

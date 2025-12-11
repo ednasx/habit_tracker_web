@@ -71,8 +71,8 @@ function App() {
 
     loadPendingCount()
     
-    // Poll every 30 seconds
-    const interval = setInterval(loadPendingCount, 30000)
+    // Poll every 60 seconds to reduce server load
+    const interval = setInterval(loadPendingCount, 60000)
     return () => clearInterval(interval)
   }, [session, hasProfile])
 
