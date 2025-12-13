@@ -26,6 +26,7 @@ monitoring:
     enabled: true
     retention: 15d
     scrapeInterval: 15s
+    evaluationInterval: 15s
   grafana:
     enabled: true
     adminUser: admin
