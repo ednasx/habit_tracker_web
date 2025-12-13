@@ -9,8 +9,9 @@ import YAML from 'yamljs'
 import leaderboardRouter from './routes/leaderboardRoutes.js'
 import { requireAuth } from './auth/authMiddleware.js'
 import habitsRouter from './routes/habitsRoutes.js'
-import { register } from './monitoring/metrics.js'
+import { register, activeHabits } from './monitoring/metrics.js'
 import { metricsMiddleware } from './monitoring/middleware.js'
+import { supabaseAdmin } from './config/supabaseClient.js'
 
 dotenv.config()
 
@@ -59,11 +60,44 @@ app.use('/api/habits', requireAuth, habitsRouter)
 // Leaderboard routes
 app.use('/api/leaderboard', requireAuth, leaderboardRouter)
 
+/**
+ * Initialize metrics from database on startup.
+ * This ensures the activeHabits gauge reflects the actual state
+ * rather than starting at 0 after every restart.
+ */
+async function initializeMetrics() {
+  try {
+    console.log('[Metrics] Initializing activeHabits gauge...')
+    
+    // Query database for current count of active habits
+    const { count, error } = await supabaseAdmin
+      .from('habits')
+      .select('*', { count: 'exact', head: true })
+      .eq('archived', false)
+    
+    if (error) {
+      console.error('[Metrics] Failed to query habit count:', error.message)
+      return
+    }
+    
+    // Set the gauge to the actual database value
+    activeHabits.set({ service: 'habit-service' }, count || 0)
+    console.log(`[Metrics] ✅ Set activeHabits gauge to ${count}`)
+    
+  } catch (err) {
+    console.error('[Metrics] Error initializing metrics:', err.message)
+    // Don't crash the service if metrics initialization fails
+  }
+}
+
 // at bottom
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`[Server] Listening on port ${PORT}`)
     console.log(`[Habit Service] Metrics available at http://localhost:${PORT}/metrics`)
+    
+    // Initialize metrics after server starts
+    await initializeMetrics()
   })
 }
 
