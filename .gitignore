@@ -42,6 +42,4 @@ coverage/
 *.tsbuildinfo
 
 # Kubernetes secrets (should not be committed)
-**/*secret*.yaml
-**/*-secret.yaml
 infra/k8s/helm/habit-tracker/templates/supabase-secret.yaml
