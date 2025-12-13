@@ -23,9 +23,12 @@ spec:
               name: http
           env:
             - name: GF_SECURITY_ADMIN_USER
-              value: "admin"
+              value: {{ .Values.monitoring.grafana.adminUser | quote }}
             - name: GF_SECURITY_ADMIN_PASSWORD
-              value: "admin123"
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-grafana-credentials
+                  key: admin-password
             - name: GF_USERS_ALLOW_SIGN_UP
               value: "false"
             - name: GF_SERVER_ROOT_URL

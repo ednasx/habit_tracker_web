@@ -30,7 +30,7 @@ open http://localhost:3000
 
 # Login
 Username: admin
-Password: admin123
+Password: (set in GitHub Secrets as GRAFANA_ADMIN_PASSWORD)
 ```
 
 ### Prometheus UI

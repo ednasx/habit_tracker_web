@@ -29,4 +29,4 @@ monitoring:
   grafana:
     enabled: true
     adminUser: admin
-    adminPassword: admin123
+    # adminPassword: Stored in Kubernetes Secret (created by CI/CD from GitHub Secrets)
