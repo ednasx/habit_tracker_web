@@ -35,6 +35,8 @@ spec:
               value: "http://localhost:3000"
             - name: GF_INSTALL_PLUGINS
               value: ""
+            - name: GF_PATHS_DATA
+              value: "/var/lib/grafana/data"
           volumeMounts:
             - name: datasources
               mountPath: /etc/grafana/provisioning/datasources
@@ -43,7 +45,7 @@ spec:
             - name: dashboards
               mountPath: /var/lib/grafana/dashboards
             - name: storage
-              mountPath: /var/lib/grafana
+              mountPath: /var/lib/grafana/data
           resources:
             requests:
               memory: "256Mi"
