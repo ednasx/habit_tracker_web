@@ -32,7 +32,9 @@ spec:
             - name: GF_USERS_ALLOW_SIGN_UP
               value: "false"
             - name: GF_SERVER_ROOT_URL
-              value: "http://localhost:3000"
+              value: "https://{{ .Values.monitoring.grafana.domain }}{{ .Values.monitoring.grafana.subPath }}"
+            - name: GF_SERVER_SERVE_FROM_SUB_PATH
+              value: {{ .Values.monitoring.grafana.serveFromSubPath | quote }}
             - name: GF_INSTALL_PLUGINS
               value: ""
             - name: GF_PATHS_DATA

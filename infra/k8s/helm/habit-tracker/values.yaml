@@ -31,3 +31,6 @@ monitoring:
     enabled: true
     adminUser: admin
     # adminPassword: Stored in Kubernetes Secret (created by CI/CD from GitHub Secrets)
+    domain: "habit-tracker.ltu-m7011e-8.se"
+    subPath: "/grafana"
+    serveFromSubPath: true
