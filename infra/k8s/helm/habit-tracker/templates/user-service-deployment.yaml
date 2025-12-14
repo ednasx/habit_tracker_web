@@ -20,6 +20,12 @@ spec:
           ports:
             - containerPort: {{ .Values.userService.port }}
           env:
+            - name: NODE_ENV
+              value: "{{ .Values.userService.nodeEnv }}"
+            - name: SERVICE_NAME
+              value: "{{ .Values.userService.serviceName }}"
+            - name: SERVICE_VERSION
+              value: "{{ .Values.userService.serviceVersion }}"
             - name: PORT
               value: "{{ .Values.userService.port }}"
             # Later: mount secrets for DB, Supabase, RabbitMQ, etc.

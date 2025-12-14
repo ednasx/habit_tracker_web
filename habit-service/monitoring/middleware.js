@@ -1,6 +1,5 @@
 import { httpRequestsTotal, httpRequestDuration } from './metrics.js'
-
-const SERVICE_NAME = process.env.SERVICE_NAME || 'habit-service'
+import { SERVICE_NAME } from '../config/service.js'
 
 export function metricsMiddleware(req, res, next) {
   const start = Date.now()

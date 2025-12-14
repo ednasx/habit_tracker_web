@@ -7,13 +7,23 @@ frontend:
 habitService:
   image: brandonchongwenjun/habit-service:5b9932dc611c3ad7c7da3875c7cdd0c1ffc87e4a
   port: 4000
+  nodeEnv: "production"
+  serviceName: "habit-service"
+  serviceVersion: "1.0.0"
 
 userService:
   image: brandonchongwenjun/user-service:5b9932dc611c3ad7c7da3875c7cdd0c1ffc87e4a
   port: 4001
+  nodeEnv: "production"
+  serviceName: "user-service"
+  serviceVersion: "1.0.0"
 
 analytics:
   image: brandonchongwenjun/habit-analytics:5b9932dc611c3ad7c7da3875c7cdd0c1ffc87e4a
+  nodeEnv: "production"
+  serviceName: "analytics-service"
+  serviceVersion: "1.0.0"
+
 rabbitmq:
   image: rabbitmq:3-management
   username: guest

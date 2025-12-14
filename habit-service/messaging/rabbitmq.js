@@ -4,8 +4,7 @@ import {
   rabbitmqMessagesFailed,
   rabbitmqChannelClosed 
 } from '../monitoring/metrics.js'
-
-const SERVICE_NAME = 'habit-service'
+import { SERVICE_NAME } from '../config/service.js'
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq:5672'
 const EXCHANGE_NAME = process.env.RABBITMQ_HABIT_EXCHANGE || 'habit.events'
