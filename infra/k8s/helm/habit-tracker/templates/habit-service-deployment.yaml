@@ -12,6 +12,10 @@ spec:
     metadata:
       labels:
         app: habit-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .Values.habitService.port }}"
+        prometheus.io/path: "/metrics"
     spec:
       containers:
         - name: habit-service
