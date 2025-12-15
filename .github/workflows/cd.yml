@@ -61,12 +61,24 @@ jobs:
       - name: Create Grafana credentials Secret
         run: |
           # Create or update the Grafana admin password secret
-          kubectl create secret generic habit-tracker-grafana-credentials \
-            -n habit-dev \
-            --from-literal=admin-password='${{ secrets.GRAFANA_ADMIN_PASSWORD }}' \
-            --dry-run=client -o yaml | kubectl apply -f -
+          # This Secret is managed by CD workflow, not Argo CD
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: habit-tracker-grafana-credentials
+            namespace: habit-dev
+            labels:
+              app: grafana
+            annotations:
+              argocd.argoproj.io/compare: IgnoreExtraneous # dont compare with Git
+              argocd.argoproj.io/sync-options: Prune=false # Dont delete if missing from Git
+          type: Opaque
+          data:
+            admin-password: $(echo -n '${{ secrets.GRAFANA_ADMIN_PASSWORD }}' | base64 -w0)
+          EOF
           
-          echo "✅ Grafana credentials secret created/updated"
+          echo "✅ Grafana credentials secret created/updated (ignored by Argo CD)"
 
       - name: Update Helm values.yaml with new image tags
         env:
