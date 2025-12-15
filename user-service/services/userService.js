@@ -1,5 +1,13 @@
 import { supabaseAdmin } from '../config/supabaseClient.js'
 import { validateUUID } from '../utils/validation.js'
+import { 
+  totalUsers,
+  friendRequestsSentTotal, 
+  friendRequestsAcceptedTotal, 
+  friendRequestsRejectedTotal,
+  friendshipsRemovedTotal
+} from '../monitoring/metrics.js'
+import { SERVICE_NAME } from '../config/service.js'
 
 // Username validation regex: 3-20 chars, lowercase alphanumeric, underscores, hyphens
 const USERNAME_REGEX = /^[a-z0-9_-]{3,20}$/
@@ -77,6 +85,11 @@ export async function createOrUpdateProfile(userId, { username, display_name }) 
 
   if (error) {
     throw new Error(`Failed to save profile: ${error.message}`)
+  }
+
+  // If this was a new user (created_at equals updated_at), increment total users
+  if (data && data.created_at === data.updated_at) {
+    totalUsers.inc({ service: SERVICE_NAME })
   }
 
   return data
@@ -318,6 +331,9 @@ export async function sendFriendRequest(userId, friendId) {
     throw new Error(`Failed to send friend request: ${error.message}`)
   }
 
+  // Increment friend requests sent counter
+  friendRequestsSentTotal.inc({ service: SERVICE_NAME })
+
   return data
 }
 
@@ -351,6 +367,9 @@ export async function acceptFriendRequest(userId, requesterId) {
   if (error) {
     throw new Error(`Failed to accept friend request: ${error.message}`)
   }
+
+  // Increment friend requests accepted counter
+  friendRequestsAcceptedTotal.inc({ service: SERVICE_NAME })
 
   return data
 }
@@ -386,6 +405,9 @@ export async function rejectFriendRequest(userId, requesterId) {
     throw new Error(`Failed to reject friend request: ${error.message}`)
   }
 
+  // Increment friend requests rejected counter
+  friendRequestsRejectedTotal.inc({ service: SERVICE_NAME })
+
   return data
 }
 
@@ -406,6 +428,9 @@ export async function removeFriendship(userId, friendId) {
   if (!data || data.length === 0) {
     throw new Error('Friendship not found')
   }
+
+  // Increment friendships removed counter
+  friendshipsRemovedTotal.inc({ service: SERVICE_NAME })
 
   return data[0]
 }
