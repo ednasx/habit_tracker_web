@@ -1,21 +1,21 @@
 namespace: habit-dev
 frontend:
-  image: brandonchongwenjun/habit-frontend:e274c109f96af5288206cfa430be33b659ae2a55
+  image: brandonchongwenjun/habit-frontend:934d2b60bfd55febca7ce6f47f2ecc4d4346a591
   port: 80
 habitService:
-  image: brandonchongwenjun/habit-service:e274c109f96af5288206cfa430be33b659ae2a55
+  image: brandonchongwenjun/habit-service:934d2b60bfd55febca7ce6f47f2ecc4d4346a591
   port: 4000
   nodeEnv: production
   serviceName: habit-service
   serviceVersion: 1.0.0
 userService:
-  image: brandonchongwenjun/user-service:e274c109f96af5288206cfa430be33b659ae2a55
+  image: brandonchongwenjun/user-service:934d2b60bfd55febca7ce6f47f2ecc4d4346a591
   port: 4001
   nodeEnv: production
   serviceName: user-service
   serviceVersion: 1.0.0
 analytics:
-  image: brandonchongwenjun/habit-analytics:e274c109f96af5288206cfa430be33b659ae2a55
+  image: brandonchongwenjun/habit-analytics:934d2b60bfd55febca7ce6f47f2ecc4d4346a591
   nodeEnv: production
   serviceName: analytics-service
   serviceVersion: 1.0.0
