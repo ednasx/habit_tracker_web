@@ -41,6 +41,23 @@ jobs:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
 
+      - name: Debug - Verify GRAFANA_ADMIN_PASSWORD is set
+        env:
+          GRAFANA_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$GRAFANA_PASSWORD" ]; then
+            echo "❌ ERROR: GRAFANA_ADMIN_PASSWORD GitHub Secret is EMPTY or NOT SET!"
+            echo "Please add it at: https://github.com/${{ github.repository }}/settings/secrets/actions"
+            exit 1
+          else
+            PASSWORD_LENGTH=${#GRAFANA_PASSWORD}
+            echo "✅ GRAFANA_ADMIN_PASSWORD is set"
+            echo "   Password length: $PASSWORD_LENGTH characters"
+            if [ $PASSWORD_LENGTH -lt 8 ]; then
+              echo "⚠️  WARNING: Password is shorter than 8 characters. Consider using a stronger password."
+            fi
+          fi
+
       - name: Create Grafana credentials Secret
         run: |
           # Create or update the Grafana admin password secret
