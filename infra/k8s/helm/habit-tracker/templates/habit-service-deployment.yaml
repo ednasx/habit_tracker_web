@@ -20,7 +20,7 @@ spec:
           ports:
             - containerPort: {{ .Values.habitService.port }}
           env:
-            -name: NODE_ENV
+            - name: NODE_ENV
               value: "{{ .Values.habitService.nodeEnv }}"
             - name: SERVICE_NAME
               value: "{{ .Values.habitService.serviceName }}"
