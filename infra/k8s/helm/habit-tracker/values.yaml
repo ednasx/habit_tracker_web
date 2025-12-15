@@ -1,36 +1,29 @@
 namespace: habit-dev
-
 frontend:
-  image: brandonchongwenjun/habit-frontend:5b9932dc611c3ad7c7da3875c7cdd0c1ffc87e4a
+  image: brandonchongwenjun/habit-frontend:b8f70f6322a93825d0c7cfd0113dca6e982b10b0
   port: 80
-
 habitService:
-  image: brandonchongwenjun/habit-service:5b9932dc611c3ad7c7da3875c7cdd0c1ffc87e4a
+  image: brandonchongwenjun/habit-service:b8f70f6322a93825d0c7cfd0113dca6e982b10b0
   port: 4000
-  nodeEnv: "production"
-  serviceName: "habit-service"
-  serviceVersion: "1.0.0"
-
+  nodeEnv: production
+  serviceName: habit-service
+  serviceVersion: 1.0.0
 userService:
-  image: brandonchongwenjun/user-service:5b9932dc611c3ad7c7da3875c7cdd0c1ffc87e4a
+  image: brandonchongwenjun/user-service:b8f70f6322a93825d0c7cfd0113dca6e982b10b0
   port: 4001
-  nodeEnv: "production"
-  serviceName: "user-service"
-  serviceVersion: "1.0.0"
-
+  nodeEnv: production
+  serviceName: user-service
+  serviceVersion: 1.0.0
 analytics:
-  image: brandonchongwenjun/habit-analytics:5b9932dc611c3ad7c7da3875c7cdd0c1ffc87e4a
-  nodeEnv: "production"
-  serviceName: "analytics-service"
-  serviceVersion: "1.0.0"
-
+  image: brandonchongwenjun/habit-analytics:b8f70f6322a93825d0c7cfd0113dca6e982b10b0
+  nodeEnv: production
+  serviceName: analytics-service
+  serviceVersion: 1.0.0
 rabbitmq:
   image: rabbitmq:3-management
   username: guest
   password: guest
   storage: 1Gi
-
-# Monitoring configuration
 monitoring:
   prometheus:
     enabled: true
@@ -41,7 +34,6 @@ monitoring:
   grafana:
     enabled: true
     adminUser: admin
-    # adminPassword: Stored in Kubernetes Secret (created by CI/CD from GitHub Secrets)
-    domain: "habit-tracker.ltu-m7011e-8.se"
-    subPath: "/grafana"
+    domain: habit-tracker.ltu-m7011e-8.se
+    subPath: /grafana
     serveFromSubPath: true
