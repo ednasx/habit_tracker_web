@@ -34,6 +34,23 @@ jobs:
 
       - name: Switch to main branch
         run: git checkout -B main
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Create Grafana credentials Secret
+        run: |
+          # Create or update the Grafana admin password secret
+          kubectl create secret generic habit-tracker-grafana-credentials \
+            -n habit-dev \
+            --from-literal=admin-password='${{ secrets.GRAFANA_ADMIN_PASSWORD }}' \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          echo "✅ Grafana credentials secret created/updated"
+
       - name: Update Helm values.yaml with new image tags
         env:
           VALUES_FILE: infra/k8s/helm/habit-tracker/values.yaml

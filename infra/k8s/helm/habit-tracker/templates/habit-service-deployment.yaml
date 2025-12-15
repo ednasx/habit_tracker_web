@@ -20,6 +20,12 @@ spec:
           ports:
             - containerPort: {{ .Values.habitService.port }}
           env:
+            -name: NODE_ENV
+              value: "{{ .Values.habitService.nodeEnv }}"
+            - name: SERVICE_NAME
+              value: "{{ .Values.habitService.serviceName }}"
+            - name: SERVICE_VERSION
+              value: "{{ .Values.habitService.serviceVersion }}"
             - name: PORT
               value: "{{ .Values.habitService.port }}"
             # Later: mount secrets for DB, Supabase, RabbitMQ, etc.

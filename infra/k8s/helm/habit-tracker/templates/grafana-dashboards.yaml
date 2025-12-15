@@ -1,0 +1,260 @@
+{{- if .Values.monitoring.grafana.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-grafana-dashboards
+  namespace: {{ .Values.namespace }}
+data:
+  habit-tracker-overview.json: |
+    {
+      "dashboard": {
+        "title": "Habit Tracker - System Overview",
+        "tags": ["habit-tracker", "overview"],
+        "timezone": "browser",
+        "refresh": "10s",
+        "time": {
+          "from": "now-15m",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Request Rate (req/s)",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total[5m])) by (service)",
+                "legendFormat": "{{ "{{" }}service{{ "}}" }}"
+              }
+            ],
+            "yaxes": [{"label": "req/s", "format": "short"}]
+          },
+          {
+            "id": 2,
+            "title": "Error Rate (%)",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) by (service) / sum(rate(http_requests_total[5m])) by (service) * 100",
+                "legendFormat": "{{ "{{" }}service{{ "}}" }}"
+              }
+            ],
+            "yaxes": [{"label": "%", "format": "percent"}],
+            "alert": {
+              "conditions": [
+                {
+                  "evaluator": {"params": [5], "type": "gt"},
+                  "query": {"params": ["A", "5m", "now"]},
+                  "type": "query"
+                }
+              ]
+            }
+          },
+          {
+            "id": 3,
+            "title": "Response Time (p95)",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))",
+                "legendFormat": "{{ "{{" }}service{{ "}}" }} p95"
+              },
+              {
+                "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))",
+                "legendFormat": "{{ "{{" }}service{{ "}}" }} p50"
+              }
+            ],
+            "yaxes": [{"label": "seconds", "format": "s"}]
+          },
+          {
+            "id": 4,
+            "title": "RabbitMQ Queue Depth",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rabbitmq_queue_messages",
+                "legendFormat": "{{ "{{" }}queue{{ "}}" }}"
+              }
+            ],
+            "yaxes": [{"label": "messages", "format": "short"}]
+          },
+          {
+            "id": 5,
+            "title": "Pod CPU Usage",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"habit-dev\"}[5m])) by (pod) * 100",
+                "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
+              }
+            ],
+            "yaxes": [{"label": "%", "format": "percent"}]
+          },
+          {
+            "id": 6,
+            "title": "Pod Memory Usage",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes{namespace=\"habit-dev\"} / 1024 / 1024",
+                "legendFormat": "{{ "{{" }}pod{{ "}}" }}"
+              }
+            ],
+            "yaxes": [{"label": "MB", "format": "MByte"}]
+          }
+        ]
+      }
+    }
+
+  habit-service-details.json: |
+    {
+      "dashboard": {
+        "title": "Habit Service - Detailed Metrics",
+        "tags": ["habit-tracker", "habit-service"],
+        "timezone": "browser",
+        "refresh": "10s",
+        "time": {
+          "from": "now-15m",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Request Rate by Endpoint",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8},
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{service=\"habit-service\"}[5m])) by (endpoint, method)",
+                "legendFormat": "{{ "{{" }}method{{ "}}" }} {{ "{{" }}endpoint{{ "}}" }}"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "Response Time by Endpoint (p95)",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service=\"habit-service\"}[5m])) by (le, endpoint))",
+                "legendFormat": "{{ "{{" }}endpoint{{ "}}" }}"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "Active Habits (Gauge)",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 16, "w": 8, "h": 4},
+            "targets": [
+              {
+                "expr": "active_habits{service=\"habit-service\"}"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Habit Completions (Rate)",
+            "type": "graph",
+            "gridPos": {"x": 8, "y": 16, "w": 16, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(habit_completions_total{service=\"habit-service\"}[5m])",
+                "legendFormat": "completions/sec"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+  rabbitmq-metrics.json: |
+    {
+      "dashboard": {
+        "title": "RabbitMQ - Message Queue Metrics",
+        "tags": ["habit-tracker", "rabbitmq"],
+        "timezone": "browser",
+        "refresh": "10s",
+        "time": {
+          "from": "now-15m",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Queue Depth",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rabbitmq_queue_messages",
+                "legendFormat": "{{ "{{" }}queue{{ "}}" }} - ready"
+              },
+              {
+                "expr": "rabbitmq_queue_messages_unacknowledged",
+                "legendFormat": "{{ "{{" }}queue{{ "}}" }} - unacked"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "Message Rate (msg/s)",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(rabbitmq_queue_messages_published_total[5m])",
+                "legendFormat": "{{ "{{" }}queue{{ "}}" }} - published"
+              },
+              {
+                "expr": "rate(rabbitmq_queue_messages_delivered_total[5m])",
+                "legendFormat": "{{ "{{" }}queue{{ "}}" }} - delivered"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "Message Processing Time",
+            "type": "graph",
+            "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(rabbitmq_message_processing_duration_seconds_bucket[5m])) by (le, queue))",
+                "legendFormat": "{{ "{{" }}queue{{ "}}" }} p95"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "Consumer Count",
+            "type": "stat",
+            "gridPos": {"x": 0, "y": 16, "w": 12, "h": 4},
+            "targets": [
+              {
+                "expr": "rabbitmq_queue_consumers"
+              }
+            ]
+          },
+          {
+            "id": 5,
+            "title": "Failed Messages",
+            "type": "graph",
+            "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+            "targets": [
+              {
+                "expr": "rate(rabbitmq_messages_failed_total[5m])",
+                "legendFormat": "{{ "{{" }}queue{{ "}}" }} - failures/sec"
+              }
+            ]
+          }
+        ]
+      }
+    }
+{{- end }}

@@ -19,6 +19,12 @@ spec:
           image: {{ .Values.analytics.image }}
           imagePullPolicy: Always
           env:
+            - name: NODE_ENV
+              value: "{{ .Values.analytics.nodeEnv }}"
+            - name: SERVICE_NAME
+              value: "{{ .Values.analytics.serviceName }}"
+            - name: SERVICE_VERSION
+              value: "{{ .Values.analytics.serviceVersion }}"
             - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:

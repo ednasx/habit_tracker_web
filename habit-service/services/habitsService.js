@@ -1,4 +1,6 @@
 import { supabaseAdmin } from '../config/supabaseClient.js'
+import { activeHabits, habitCompletionsTotal } from '../monitoring/metrics.js'
+
 
 function ensureSupabaseConfigured() {
   if (!supabaseAdmin) {
@@ -82,6 +84,9 @@ export async function createHabit({ userId, name, description }) {
   if (error) {
     throw new Error(`Supabase createHabit error: ${error.message}`)
   }
+
+  // Increment active habits metric
+  activeHabits.inc({ service: 'habit-service' })
 
   // Newly created habit has 0 stats initially; we don't create a habit_stats row yet.
   return data
@@ -167,6 +172,9 @@ export async function deleteHabit({ userId, habitId }) {
     throw new Error(`Supabase deleteHabit error: ${error.message}`)
   }
 
+  // Decrement active habits metric
+  activeHabits.dec({ service: 'habit-service' })
+
   // habit_stats and habit_logs are deleted via ON DELETE CASCADE from DB
   return data
 }
@@ -204,6 +212,9 @@ export async function logHabitCompletion({ userId, habitId, date, value = 1 }) {
   if (error) {
     throw new Error(`Supabase logHabitCompletion error: ${error.message}`)
   }
+
+  // Increment habit completions counter
+  habitCompletionsTotal.inc({ service: 'habit-service' })
 
   // Stats are computed asynchronously by analytics-service via RabbitMQ events
   // No synchronous recomputation here to maintain microservices architecture
