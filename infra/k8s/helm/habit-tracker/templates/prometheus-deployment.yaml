@@ -23,7 +23,7 @@ spec:
           args:
             - '--config.file=/etc/prometheus/prometheus.yml'
             - '--storage.tsdb.path=/prometheus'
-            - '--storage.tsdb.retention.time=15d'
+            - '--storage.tsdb.retention.time={{ .Values.monitoring.prometheus.retention }}'
             - '--web.console.libraries=/usr/share/prometheus/console_libraries'
             - '--web.console.templates=/usr/share/prometheus/consoles'
           ports:
@@ -46,7 +46,8 @@ spec:
           configMap:
             name: {{ .Release.Name }}-prometheus-config
         - name: storage
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-prometheus-pvc
 ---
 apiVersion: v1
 kind: Service
