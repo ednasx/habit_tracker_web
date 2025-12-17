@@ -1,3 +1,4 @@
+```mermaid
 flowchart LR
   user(["User"]) -->|Uses in browser| web["Habit Tracker Web App"]
 
