@@ -1,20 +1,20 @@
 ```mermaid
 flowchart TB
-  user([User]) -->|HTTPS| browser[Browser: React SPA]
+  user(["User"]) -->|HTTPS| browser["Browser: React SPA"]
 
   subgraph Edge["Edge / Routing"]
-    ingress[Nginx Ingress (prod)\nOR Nginx Gateway (local docker-compose)]
+    ingress["Nginx Ingress (prod)<br/>OR Nginx Gateway (local docker-compose)"]
   end
 
   browser -->|GET /, static assets| ingress
   browser -->|REST calls /api/* (Bearer JWT)| ingress
 
   subgraph App["Habit Tracker Application (Kubernetes or Docker Compose)"]
-    frontend[Container: habit-frontend\nReact + Vite build]
-    habitSvc[Container: habit-service\nNode/Express + OpenAPI + Prom metrics]
-    userSvc[Container: user-service\nNode/Express + OpenAPI + Prom metrics]
-    analytics[Container: analytics-service\nRabbitMQ consumer + Supabase writes]
-    rabbit[Container: RabbitMQ\nTopic exchange: habit.events]
+    frontend["Container: habit-frontend<br/>React + Vite build"]
+    habitSvc["Container: habit-service<br/>Node/Express + OpenAPI + Prom metrics"]
+    userSvc["Container: user-service<br/>Node/Express + OpenAPI + Prom metrics"]
+    analytics["Container: analytics-service<br/>RabbitMQ consumer + Supabase writes"]
+    rabbit["Container: RabbitMQ<br/>Topic exchange: habit.events"]
   end
 
   ingress -->|/ -> frontend:80| frontend
@@ -27,8 +27,8 @@ flowchart TB
   rabbit -->|Consume: habit.completed, user.friendship.changed| analytics
 
   subgraph Data["External Managed Services"]
-    supaAuth[Supabase Auth\nJWT issuance + auth.users]
-    supaDB[Supabase Postgres\npublic.habits, habit_logs, habit_stats,\nuser_profiles, friends]
+    supaAuth["Supabase Auth<br/>JWT issuance + auth.users"]
+    supaDB["Supabase Postgres<br/>public.habits, habit_logs, habit_stats,<br/>user_profiles, friends"]
   end
 
   browser -->|Supabase login| supaAuth
@@ -37,8 +37,8 @@ flowchart TB
   analytics -->|Service-role Supabase client| supaDB
 
   subgraph Observability["Monitoring"]
-    prom[Prometheus]
-    grafana[Grafana]
+    prom["Prometheus"]
+    grafana["Grafana"]
   end
 
   habitSvc -->|GET /metrics| prom

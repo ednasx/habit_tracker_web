@@ -1,16 +1,16 @@
 ```mermaid
 flowchart LR
   subgraph UserService["Container: user-service (Node/Express)"]
-    index[index.js\nExpress app]
-    metricsMW[metricsMiddleware]
-    openapi[Swagger UI\n/api/docs]
-    authMW[requireAuth middleware\nverifies Supabase JWT]
-    usersRoutes[usersRoutes.js\n/api/users/*]
-    userSvc[userService.js\nprofiles + friends logic]
-    validation[utils/validation.js\nvalidateUUID + validateUsername]
-    supaClient[supabaseClient.js\nsupabaseAdmin (service role)]
-    rabbitPub[rabbitmq.js\npublisher + reconnect]
-    promMetrics[prom-client registry\nbusiness metrics:\nfriend_requests_* counters,\nfriendships_removed_total,\ntotal_users gauge]
+    index["index.js<br/>Express app"]
+    metricsMW["metricsMiddleware"]
+    openapi["Swagger UI<br/>/api/docs"]
+    authMW["requireAuth middleware<br/>verifies Supabase JWT"]
+    usersRoutes["usersRoutes.js<br/>/api/users/*"]
+    userSvc["userService.js<br/>profiles + friends logic"]
+    validation["utils/validation.js<br/>validateUUID + validateUsername"]
+    supaClient["supabaseClient.js<br/>supabaseAdmin (service role)"]
+    rabbitPub["rabbitmq.js<br/>publisher + reconnect"]
+    promMetrics["prom-client registry<br/>business metrics:<br/>friend_requests_* counters,<br/>friendships_removed_total,<br/>total_users gauge"]
   end
 
   index --> metricsMW
