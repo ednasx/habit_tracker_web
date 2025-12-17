@@ -1,22 +1,22 @@
 ```mermaid
 flowchart LR
   subgraph HabitService["Container: habit-service (Node/Express)"]
-    index[index.js\nExpress app]
-    helmet[helmet + cors + express.json]
-    metricsMW[metricsMiddleware\n(records http_requests_total & duration)]
-    openapi[Swagger UI\n/api/docs]
+    index["index.js<br/>Express app"]
+    helmet["helmet + cors + express.json"]
+    metricsMW["metricsMiddleware<br/>(records http_requests_total & duration)"]
+    openapi["Swagger UI<br/>/api/docs"]
 
-    authMW[requireAuth middleware\nverifies Supabase JWT]
-    habitsRoutes[habitsRoutes.js\n/api/habits/*]
-    leaderboardRoutes[leaderboardRoutes.js\n/api/leaderboard/*]
+    authMW["requireAuth middleware<br/>verifies Supabase JWT"]
+    habitsRoutes["habitsRoutes.js<br/>/api/habits/*"]
+    leaderboardRoutes["leaderboardRoutes.js<br/>/api/leaderboard/*"]
 
-    habitsSvc[habitsService.js\nDB CRUD + habit_logs upsert]
-    leaderboardSvc[leaderboardService.js\nfriends leaderboard aggregation]
+    habitsSvc["habitsService.js<br/>DB CRUD + habit_logs upsert"]
+    leaderboardSvc["leaderboardService.js<br/>friends leaderboard aggregation"]
 
-    supaClient[supabaseClient.js\nsupabaseAdmin (service role)]
-    rabbitPub[rabbitmq.js\npublisher + reconnect\n(topic exchange)]
+    supaClient["supabaseClient.js<br/>supabaseAdmin (service role)"]
+    rabbitPub["rabbitmq.js<br/>publisher + reconnect<br/>(topic exchange)"]
 
-    promMetrics[prom-client registry\nbusiness metrics:\nactiveHabits, habitCompletionsTotal,\nrabbitmq publish counters]
+    promMetrics["prom-client registry<br/>business metrics:<br/>activeHabits, habitCompletionsTotal,<br/>rabbitmq publish counters"]
   end
 
   index --> helmet
@@ -31,3 +31,4 @@ flowchart LR
 
   habitsSvc --> promMetrics
   rabbitPub --> promMetrics
+```
