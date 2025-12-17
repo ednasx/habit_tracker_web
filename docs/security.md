@@ -1,79 +1,147 @@
-# Security Foundation
+# Security
 
-This document describes the initial security design for the Habit Tracker system.
+This document describes the security design and controls for the Habit Tracker system.
+Where possible, it describes **what is implemented today**, and clearly labels optional future hardening.
 
-## 1. Input Validation
+---
+
+## 1) Input Validation
 
 ### Backend (Express)
-
-- All JSON request bodies are parsed using `express.json()`.
-- Habit creation (`POST /api/habits`) currently validates:
-  - `name` must be a non-empty string.
-- Planned improvements:
-  - Use reusable validation middleware (e.g. with `zod`/`joi` or custom functions) for all routes.
-  - Validate IDs (e.g. `habit_id`) as numeric and positive.
-  - Normalize/trim all string input before storing.
+- JSON request bodies are parsed using `express.json()`.
+- Requests are validated server-side (client validation is not trusted).
+- Typical validation rules include:
+  - required fields (e.g., habit `name`) must be non-empty strings
+  - IDs must be valid types/values (e.g., numeric `habit_id`)
+  - strings should be trimmed/normalized before storing
 
 ### Frontend (React)
+- The frontend performs basic client-side checks (e.g., “habit name is required”) for UX.
+- Client-side validation is **not a security boundary**; the backend validates again.
 
-- The frontend performs basic client-side checks (e.g. “habit name is required”).
-- Client-side validation is **not trusted** as security; the backend always validates again.
-
----
-
-## 2. SQL Injection Protection
-
-- All database access will be via:
-  - Supabase client library (`@supabase/supabase-js`), or
-  - Parameterized queries when using `pg`.
-- We will **never** build SQL by concatenating user input into strings.
-- Supabase APIs and RLS policies will be used to enforce access control at the database layer.
+**Optional improvement (hardening):**
+- Use a shared validation layer (e.g., `zod`/`joi` or centralized custom validators) across routes to ensure consistent rules.
 
 ---
 
-## 3. Authentication & Authorization
+## 2) SQL Injection Protection (REQ22)
+
+- All database access uses:
+  - Supabase client library (`@supabase/supabase-js`) query builders, and/or
+  - parameterized queries (if raw SQL is ever introduced)
+- The application avoids building SQL strings by concatenating untrusted input.
+- Access control is enforced via RLS policies at the database layer (defense-in-depth).
+
+---
+
+## 3) XSS Protection (REQ22)
+
+- Frontend is React-based, which escapes text by default when rendering.
+- The application should avoid rendering user-controlled HTML via `dangerouslySetInnerHTML`.
+- Backend services return JSON APIs (no server-side HTML rendering of user content).
+
+**Optional improvement (hardening):**
+- Add security headers (CSP, X-Frame-Options, X-Content-Type-Options, etc.) at Nginx/Ingress.
+
+---
+
+## 4) Authentication
 
 - Supabase Auth is used for user authentication.
 - Supabase issues JWTs for authenticated users.
-- The backend includes a `requireAuth` middleware that:
-  - Reads `Authorization: Bearer <token>` header.
-  - Verifies the token using `SUPABASE_JWT_SECRET`.
-  - Attaches `req.user` with at least:
-    - `id` (user id, from `sub`)
-    - `email`
-    - `role`
-- Future plan:
-  - Protect habit endpoints (e.g. `/api/habits`) using `requireAuth`.
-  - Use `req.user.id` to scope all DB queries.
-  - Use Supabase Row-Level Security (RLS) so that `user_id = auth.uid()` at the database level.
+- Clients call backend APIs using:
+
+`Authorization: Bearer <token>`
+
+- Backend services verify JWTs using `SUPABASE_JWT_SECRET` and attach `req.user` (id from JWT `sub`).
 
 ---
 
-## 4. Secrets Management
+## 5) Authorization (API + DB)
 
-- Secrets (Supabase keys, JWT secret, RabbitMQ URL, DB connection strings) are **not committed** to git.
-- Local development uses `.env` files (ignored by git) based on `.env.example`.
-- CI and Kubernetes deployment will use:
-  - GitHub Actions secrets, and
-  - Kubernetes Secrets (mounted as env vars) for production-like environments.
+Authorization is enforced in two layers:
+
+### A) API-level authorization
+- Endpoints require JWT authentication (via auth middleware).
+- Backend queries should scope data using authenticated identity (e.g., `user_id = req.user.id`).
+
+### B) Supabase Row-Level Security (RLS)
+- RLS is enabled to prevent cross-user data access even if a service makes a mistake.
 
 ---
 
-## 5. Row-Level Security (RLS)
+## 6) Row-Level Security (RLS) Policies (current)
 
-- RLS will be enabled on:
-  - `public.habits`
-  - `public.habit_logs`
-- Policies will ensure:
-  - Users can only `SELECT`, `INSERT`, `UPDATE`, `DELETE` rows where `user_id = auth.uid()`.
-- This provides defense-in-depth: even if the backend has a bug, the DB will still prevent cross-user data leaks.
+### `habits` (owner-only CRUD)
+- SELECT: `auth.uid() = user_id`
+- INSERT: `WITH CHECK (auth.uid() = user_id)`
+- UPDATE: `USING (auth.uid() = user_id)` + `WITH CHECK (auth.uid() = user_id)`
+- DELETE: `USING (auth.uid() = user_id)`
 
-# Authorization
+### `habit_logs` (owner-only CRUD)
+- SELECT: `auth.uid() = user_id`
+- INSERT: `WITH CHECK (auth.uid() = user_id)`
+- UPDATE: `USING (auth.uid() = user_id)` + `WITH CHECK (auth.uid() = user_id)`
+- DELETE: `USING (auth.uid() = user_id)`
 
-- All API endpoints require JWT-based authentication (Supabase) via `requireAuth`.
-- Backend queries always filter by `user_id = req.user.id`.
-- Supabase Row-Level Security (RLS) ensures that:
-  - rows in `habits`, `habit_logs`, and `habit_stats` are only accessible by their owner.
-  - `friends` table rows can only be created/modified by the user themselves.
+### `habit_stats`
+- RLS is enabled.
+- A SELECT policy should exist to allow users to read their own stats (commonly: `user_id = auth.uid()`).
+> If no policy exists, authenticated users will not be able to read rows under RLS unless using a service role key.
+
+### `friends` (two-sided read, sender-controlled write)
+- SELECT: `auth.uid() = user_id OR auth.uid() = friend_id`
+- INSERT: `WITH CHECK (auth.uid() = user_id)`
+- DELETE: `USING (auth.uid() = user_id)`
+
+This allows both parties to see a friendship row while restricting who can create/delete it.
+
+---
+
+## 7) Data Integrity / Abuse Prevention
+
+- `habit_logs` has a unique constraint/index on `(habit_id, date)`.
+  - ✅ prevents repeated “mark done today” spamming from creating duplicate rows for the same habit/day.
+
+---
+
+## 8) Realtime Security
+
+Supabase Realtime is enabled for:
+- `habit_logs`
+- `habit_stats`
+
+Realtime does **not** bypass RLS; access is still governed by policies.
+
+---
+
+## 9) Secrets Management
+
+Secrets (Supabase keys, JWT secret, RabbitMQ URL, etc.) are **not committed** to Git.
+
+- Local development uses `.env` (ignored by Git) based on `.env.example`.
+- CI uses GitHub Actions secrets.
+- Kubernetes deployment uses Kubernetes Secrets (env vars mounted into pods).
+
+---
+
+## 10) HTTPS / Certificates (REQ24)
+
+HTTPS is intended to be terminated at the ingress layer using:
+- cert-manager
+- Let’s Encrypt ClusterIssuer
+- Ingress TLS configuration
+
+Full operational details are documented in `docs/certificates.md` (to be added/maintained for REQ24).
+
+---
+
+## Authorization Summary (quick checklist)
+
+- API endpoints require JWT-based authentication via `requireAuth`.
+- Backend queries filter by `req.user.id` where applicable.
+- Supabase RLS ensures:
+  - `habits` and `habit_logs` are only accessible by their owner
+  - `friends` can be read by both users involved, but created/deleted by sender
+  - `habit_stats` access depends on policies (confirm SELECT policy)
 - Leaderboard queries are restricted to the authenticated user’s friends.
-
