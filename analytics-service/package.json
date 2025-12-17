@@ -1,10 +1,12 @@
 {
   "name": "analytics-service",
   "version": "1.0.0",
-  "description": "",
+  "description": "Analytics service for habit tracking events",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "test": "node --test",
+    "test:coverage": "c8 --check-coverage --lines 50 node --test"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +15,9 @@
     "@supabase/supabase-js": "^2.83.0",
     "amqplib": "^0.10.9",
     "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "c8": "^9.1.0"
   },
   "type": "module"
 }

@@ -50,10 +50,10 @@ jobs:
       - name: Install dependencies
         run: npm install #Installs the dependencies for the project.
 
-      - name: Run habit-service tests
-        run: npm test #Runs the tests for all test files under habit-service/tests/.
+      - name: Run habit-service tests with coverage
+        run: npm run test:coverage
         env:
-          NODE_ENV: test #Sets the environment variable for the project.
+          NODE_ENV: test
 
   user-service:
     runs-on: ubuntu-latest
@@ -73,11 +73,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # - name: Run user-service tests
-      #   run: npm test 
-      #   env:
-      #     NODE_ENV: test
-      # Uncomment above when you have tests in user-service
+      - name: Run user-service tests with coverage
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
 
   analytics-service:
     runs-on: ubuntu-latest
@@ -97,11 +96,10 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # - name: Run analytics-service tests
-      #   run: npm test
-      #   env:
-      #     NODE_ENV: test
-      # Uncomment above when you have tests in analytics-service
+      - name: Run analytics-service tests with coverage
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
 
   # Build and push Docker images (only on push to main, after tests pass)
   build-images:
