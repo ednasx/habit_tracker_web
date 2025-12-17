@@ -31,4 +31,3 @@ flowchart LR
 
   habitsSvc --> promMetrics
   rabbitPub --> promMetrics
-```
