@@ -32,7 +32,7 @@ File: `infra/k8s/cluster-issuer.yaml`
 
 - Creates a cluster-wide issuer named `letsencrypt-prod`
 - Uses the Let’s Encrypt production endpoint
-- Uses HTTP-01 validation through Nginx ingress
+- Intended to use HTTP-01 validation through Nginx ingress; ensure `infra/k8s/cluster-issuer.yaml` includes a `spec.acme.solvers[].http01.ingress` solver for this.
 
 Important:
 - The `spec.acme.email` field must be set to a real email address to receive expiry/issuance notifications.
