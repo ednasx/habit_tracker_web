@@ -177,8 +177,6 @@ create table if not exists public.user_profiles (
   updated_at timestamptz default now()
 );
 
-create index if not exists idx_user_profiles_username on public.user_profiles(username);
-
 create table if not exists public.friends (
   user_id uuid references auth.users(id) on delete cascade,
   friend_id uuid references auth.users(id) on delete cascade,
