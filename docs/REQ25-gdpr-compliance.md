@@ -16,7 +16,7 @@ Purpose:
 - Provide habit tracking features, friend leaderboard, and analytics.
 
 Lawful basis (typical for this kind of app):
-- Consent / contract-like necessity for providing the service to the user. <!-- align with your course wording -->
+- Consent and contract-like necessity for providing the habit-tracking service to the registered user, in line with the course GDPR guidance.
 
 ## Data minimization
 - Only store what is needed for core features (profiles, habits, logs, friend links, aggregated stats).
