@@ -46,15 +46,20 @@ Write what you observed:
 
 ## Changes made (if any) and retest
 
+## Changes made (if any) and retest
+
 ### Scenario B (after improvements)
-- What changed: **N/A (no changes yet; baseline only)**
-- VUs: **TBD**
-- Duration: **TBD**
+- What changed: **N/A (no changes; higher-load retest using k6 ramping-vus “load” scenario)**
+- VUs: **Up to 25 VUs (ramping)**
+- Duration: **3m0s (4 stages: 30s→10 VUs, 60s→25, 60s→25, 30s→0; gracefulRampDown 30s, gracefulStop 30s)**
 
 ### Results (Scenario B)
-- http_req_failed: **TBD**
-- p95 latency: **TBD**
-- requests/sec: **TBD**
+- http_req_failed: **25.00% (2080 / 8320)**
+- avg latency: **119.63ms**
+- p(90) latency: **208.77ms**
+- p(95) latency: **223.56ms**
+- max latency: **433.43ms**
+- requests/sec: **45.91624/s**
 
 ## Conclusion
 Under a baseline smoke test of **5 concurrent users for 30 seconds**, the system handled traffic with **0% failures** and very low latency (**p95 ≈ 35ms**), meeting the defined k6 thresholds. Higher-load scenarios (more VUs and longer durations) should be executed to find capacity limits and identify bottlenecks (CPU, DB, RabbitMQ queue depth, etc.).
