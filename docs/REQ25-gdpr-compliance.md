@@ -24,7 +24,7 @@ Lawful basis (typical for this kind of app):
 
 ## Storage limitation / retention
 - Data is retained as long as the account exists (or as required for course operation).
-- Users should be able to delete habits and (optionally) delete their account/profile data. <!-- describe current capabilities -->
+- Users can delete individual habits via the UI. Account/profile deletion is currently handled manually by an administrator via Supabase Auth (self-service account deletion not yet implemented).
 
 ## User rights (how they are supported)
 - Right of access: user can view their profile/habits through the UI/API.
