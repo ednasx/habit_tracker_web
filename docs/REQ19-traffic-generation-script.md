@@ -20,6 +20,6 @@ export TOKEN="<SUPABASE_JWT>"
 export HABIT_ID="1"
 export VUS="10"
 export DURATION="2m"
-```
 
 k6 run infra/loadtest/k6/habit-tracker.js
+```
