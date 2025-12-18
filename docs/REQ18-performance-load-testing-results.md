@@ -46,7 +46,6 @@ Write what you observed:
 
 ## Changes made (if any) and retest
 
-## Changes made (if any) and retest
 
 ### Scenario B (after improvements)
 - What changed: **N/A (no changes; higher-load retest using k6 ramping-vus “load” scenario)**
