@@ -85,9 +85,9 @@ Authorization is enforced in two layers:
 - DELETE: `USING (auth.uid() = user_id)`
 
 ### `habit_stats`
-- RLS is enabled.
-- A SELECT policy should exist to allow users to read their own stats (commonly: `user_id = auth.uid()`).
-> If no policy exists, authenticated users will not be able to read rows under RLS unless using a service role key.
+- RLS is enabled (implemented).
+- A SELECT policy is required to allow users to read their own stats (commonly: `user_id = auth.uid()`). Confirm that this policy is implemented.
+> Under RLS, if no SELECT policy is defined, authenticated users cannot read rows unless using a service role key.
 
 ### `friends` (two-sided read, sender-controlled write)
 - SELECT: `auth.uid() = user_id OR auth.uid() = friend_id`
