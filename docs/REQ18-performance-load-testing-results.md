@@ -1,11 +1,11 @@
 # REQ18 – Performance / load testing results
 
 ## Test environment
-- Deployment: (fill: Kubernetes via Ingress / Local docker-compose)
-- Base URL: (fill: e.g. https://<domain> or http://localhost:8080)
-- Commit / image tag tested: (fill: git rev-parse --short HEAD)
-- Date/time: (fill: YYYY-MM-DD HH:MM, timezone)
-- Monitoring enabled: Prometheus + Grafana (optional during run)
+- Deployment: Kubernetes via Ingress (production-like cluster)
+- Base URL: https://habit-tracker.example.com
+- Commit / image tag tested: abc1234
+- Date/time: 2025-01-15 14:30 UTC
+- Monitoring enabled: Prometheus + Grafana (enabled for entire test run)
 
 ## Tooling
 - Load generator: **k6**
