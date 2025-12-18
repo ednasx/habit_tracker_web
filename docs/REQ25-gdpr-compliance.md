@@ -1,7 +1,7 @@
 # REQ25 – GDPR compliance documentation
 
 ## Roles
-- Data Controller: (project team / course context) <!-- fill if required -->
+- Data Controller: Project team responsible for this application within the course context
 - Data Processor: Supabase (managed DB/auth hosting), Kubernetes hosting provider (if applicable)
 
 ## Personal data processed
