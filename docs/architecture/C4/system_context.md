@@ -23,6 +23,7 @@ flowchart LR
 
   habitSvc -->|"Expose /metrics"| prom["Prometheus"]
   userSvc -->|"Expose /metrics"| prom
+  analytics -->|"Expose /metrics"| prom
   prom -->|"Dashboards"| grafana["Grafana"]
 
   web -->|"Optional realtime subscriptions"| supaRT["Supabase Realtime"]

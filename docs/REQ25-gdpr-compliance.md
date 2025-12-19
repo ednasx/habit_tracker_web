@@ -29,7 +29,7 @@ Lawful basis (typical for this kind of app):
 ## User rights (how they are supported)
 - Right of access: user can view their profile/habits through the UI/API.
 - Right to rectification: user can update profile and habits.
-- Right to erasure: user can delete habits; account deletion depends on Supabase auth process (manual/admin if not implemented).
+- Right to erasure: user can delete individual habits via the UI. Full account/profile deletion currently requires manual/admin action via Supabase Auth and is therefore a known limitation/gap; implementing self-service account deletion is required for full GDPR compliance.
 - Right to data portability: export can be provided by querying user data (documented as a support process).
 
 ## Security measures (summary)
