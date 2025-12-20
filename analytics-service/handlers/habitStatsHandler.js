@@ -1,5 +1,7 @@
 // analytics-service/handlers/habitStatsHandler.js
-import { createClient } from '@supabase/supabase-js'
+import supabasePkg from '@supabase/supabase-js'
+
+const { createClient } = supabasePkg
 
 const supabaseUrl = process.env.SUPABASE_URL
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -8,7 +10,8 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
   throw new Error('[Analytics] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
 }
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+// Exported for testing so we can mock Supabase interactions in unit tests
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
 
@@ -67,6 +70,7 @@ export async function handleHabitCompleted(event) {
       const prevDate = new Date(prevDateStr + 'T00:00:00Z')
       const diffDays =
         (eventDate - prevDate) / (1000 * 60 * 60 * 24)
+        //1000 milliseconds per second, 60 seconds per minute, 60 minutes per hour, 24 hours per day. result: number of days
 
       if (diffDays === 0) {
         // Same calendar day as last completion:

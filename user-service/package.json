@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "node --test"
+    "test": "node --test",
+    "test:coverage": "c8 --check-coverage --lines 50 node --test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.81.1",
@@ -21,6 +22,7 @@
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
+    "c8": "^9.1.0",
     "nodemon": "^3.1.0",
     "supertest": "^7.1.4"
   }
