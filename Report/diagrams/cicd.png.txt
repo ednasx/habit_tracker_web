@@ -1,0 +1,90 @@
+# PLACEHOLDER: cicd.png
+
+## What This Diagram Should Show
+
+The complete CI/CD pipeline from code commit to production deployment using GitHub Actions and ArgoCD.
+
+## Pipeline Stages
+
+### 1. Developer Action
+- Developer pushes code to `main` branch
+
+### 2. CI Stage (GitHub Actions)
+- **Trigger:** Push to main or Pull Request
+- **Jobs:**
+  - Test frontend (npm test)
+  - Test habit-service (npm run test:coverage)
+  - Test user-service (npm run test:coverage)
+  - Test analytics-service (npm run test:coverage)
+- **On Success (main only):**
+  - Build Docker images
+  - Tag with commit SHA + latest
+  - Push to Docker Hub
+
+### 3. CD Stage (GitHub Actions)
+- **Trigger:** After CI completes successfully
+- **Actions:**
+  - Checkout repository
+  - Update `values.yaml` with new image tags
+  - Commit changes with `[skip ci]`
+  - Push to Git
+
+### 4. GitOps Stage (ArgoCD)
+- **Trigger:** Git repository change detected
+- **Actions:**
+  - Pull latest Helm chart from Git
+  - Compare with current cluster state
+  - Apply changes to Kubernetes
+  - Rolling update of pods
+
+### 5. Deployment Stage (Kubernetes)
+- Pull new images from Docker Hub
+- Start new pods
+- Wait for health checks
+- Terminate old pods
+- Deployment complete
+
+## Visual Elements
+
+**Boxes:**
+- Developer (person icon)
+- GitHub (logo)
+- GitHub Actions CI (workflow icon)
+- GitHub Actions CD (workflow icon)
+- Docker Hub (logo)
+- Git Repository (folder icon)
+- ArgoCD (logo)
+- Kubernetes Cluster (logo)
+
+**Arrows:**
+- Developer → GitHub (git push)
+- GitHub → CI (trigger)
+- CI → Docker Hub (push images)
+- CI → CD (trigger on success)
+- CD → Git (update values.yaml)
+- Git → ArgoCD (poll/webhook)
+- ArgoCD → Kubernetes (apply changes)
+- Kubernetes → Docker Hub (pull images)
+
+**Decision Points:**
+- Tests pass? (Yes → Build, No → Fail)
+- Main branch? (Yes → CD, No → Stop)
+- Changes detected? (Yes → Sync, No → Wait)
+
+## How to Create
+
+### Option 1: Flowchart in draw.io
+1. Go to https://app.diagrams.net/
+2. Use flowchart shapes
+3. Add decision diamonds for conditionals
+4. Use different colors for each stage
+5. Export as PNG
+
+### Option 2: Sequence Diagram
+1. Use PlantUML or Mermaid
+2. Show time-based flow
+3. Render to PNG
+
+## Reference
+See `Report/03-cicd-gitops.md` section 3.1 for complete pipeline flow documentation.
+

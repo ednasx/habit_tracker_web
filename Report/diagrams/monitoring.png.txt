@@ -1,0 +1,154 @@
+# PLACEHOLDER: monitoring.png
+
+## What This Diagram Should Show
+
+The monitoring and observability architecture showing metrics collection, storage, and visualization.
+
+## Components
+
+### 1. Metrics Sources
+- **Habit Service** (/metrics endpoint)
+- **User Service** (/metrics endpoint)
+- **Analytics Service** (/metrics endpoint)
+
+### 2. Metrics Collector
+- **Prometheus**
+  - Scrapes /metrics every 15 seconds
+  - Stores time-series data
+  - 15-day retention
+  - 10Gi persistent volume
+
+### 3. Visualization
+- **Grafana**
+  - Queries Prometheus
+  - Displays dashboards
+  - Accessible at /grafana
+
+### 4. Logs (Current)
+- **Kubernetes Logs**
+  - Services log to stdout/stderr
+  - Viewable via kubectl logs
+
+### 5. Logs (Future)
+- **Centralized Logging**
+  - Fluent Bit (log shipper)
+  - Elasticsearch or Loki (storage)
+  - Kibana or Grafana (visualization)
+
+### 6. Traces (Future)
+- **Distributed Tracing**
+  - OpenTelemetry SDK
+  - Jaeger Collector
+  - Jaeger UI
+
+## Data Flow
+
+### Metrics Flow
+```
+Services → /metrics endpoint
+   ↓
+Prometheus (scrape every 15s)
+   ↓
+Time-series database
+   ↓
+Grafana (query)
+   ↓
+Dashboards
+```
+
+### Logs Flow (Current)
+```
+Services → stdout/stderr
+   ↓
+Kubernetes logs
+   ↓
+kubectl logs (manual viewing)
+```
+
+### Logs Flow (Future)
+```
+Services → stdout/stderr
+   ↓
+Fluent Bit (log shipper)
+   ↓
+Elasticsearch/Loki (storage)
+   ↓
+Kibana/Grafana (visualization)
+```
+
+### Traces Flow (Future)
+```
+Services (OpenTelemetry instrumented)
+   ↓
+Jaeger Agent
+   ↓
+Jaeger Collector
+   ↓
+Jaeger Storage
+   ↓
+Jaeger UI
+```
+
+## Metrics Collected
+
+### Default Metrics
+- CPU usage
+- Memory usage
+- Event loop lag
+- Active handles/requests
+
+### HTTP Metrics
+- Request rate
+- Request duration (histogram)
+- Error rate
+- Status codes
+
+### Business Metrics
+- Active habits count
+- Habit completions total
+- Friend requests sent/accepted
+- Total users
+
+### RabbitMQ Metrics
+- Messages published
+- Messages failed
+- Queue depth (future)
+
+## Visual Elements
+
+**Boxes:**
+- Services (3 boxes: habit, user, analytics)
+- Prometheus (database icon)
+- Grafana (dashboard icon)
+- Kubernetes (logo)
+- Future components (dotted lines)
+
+**Arrows:**
+- Services → Prometheus (scrape)
+- Prometheus → Grafana (query)
+- Services → Kubernetes logs
+- Future: Services → Fluent Bit → ELK/Loki
+- Future: Services → Jaeger
+
+**Labels:**
+- Scrape interval: 15s
+- Retention: 15 days
+- Storage: 10Gi
+
+## How to Create
+
+### Option 1: Architecture Diagram
+1. Use draw.io
+2. Show components as boxes
+3. Add arrows for data flow
+4. Use dotted lines for future components
+5. Export as PNG
+
+### Option 2: Mermaid Diagram
+1. Create flowchart
+2. Show data flow
+3. Render to PNG
+
+## Reference
+See `Report/05-observability.md` section 1.1 for monitoring architecture documentation.
+

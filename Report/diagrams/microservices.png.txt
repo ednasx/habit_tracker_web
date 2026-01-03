@@ -1,0 +1,80 @@
+# PLACEHOLDER: microservices.png
+
+## What This Diagram Should Show
+
+A visual representation of the microservices architecture showing all components and their communication patterns.
+
+## Components to Include
+
+1. **Frontend (React + Nginx)**
+   - Port 80
+   - Serves static files
+   - Makes API calls
+
+2. **Habit Service (Node.js + Express)**
+   - Port 4000
+   - Handles habit CRUD operations
+   - Publishes events to RabbitMQ
+
+3. **User Service (Node.js + Express)**
+   - Port 4001
+   - Handles user profiles and friendships
+   - Publishes events to RabbitMQ
+
+4. **Analytics Service (Node.js)**
+   - Consumes events from RabbitMQ
+   - Computes statistics
+   - Updates database
+
+5. **RabbitMQ**
+   - Topic exchange: habit.events
+   - Queues events for processing
+
+6. **Supabase**
+   - PostgreSQL database
+   - Authentication service
+   - Realtime WebSocket service
+
+7. **Nginx Ingress**
+   - TLS termination
+   - Routes traffic to services
+
+8. **Prometheus**
+   - Scrapes /metrics endpoints
+   - Stores time-series data
+
+9. **Grafana**
+   - Visualizes metrics
+   - Dashboards
+
+## Communication Arrows
+
+- Frontend → Nginx Ingress (HTTPS)
+- Nginx Ingress → Services (HTTP)
+- Services → Supabase (PostgreSQL queries)
+- Services → RabbitMQ (Publish events)
+- RabbitMQ → Analytics Service (Consume events)
+- Frontend ← Supabase Realtime (WebSocket subscriptions)
+- Prometheus → Services (Scrape /metrics)
+- Grafana → Prometheus (Query metrics)
+
+## How to Create
+
+### Option 1: Use Existing Mermaid Diagram
+1. Open `docs/architecture/C4/container_diagram.md`
+2. Copy the Mermaid code
+3. Go to https://mermaid.live/
+4. Paste the code
+5. Click "Actions" → "PNG"
+6. Save as `microservices.png`
+
+### Option 2: Create in draw.io
+1. Go to https://app.diagrams.net/
+2. Create new diagram
+3. Add boxes for each component
+4. Add arrows for communication
+5. Export as PNG
+
+## Reference
+See `Report/02-architecture.md` for detailed architecture documentation.
+
