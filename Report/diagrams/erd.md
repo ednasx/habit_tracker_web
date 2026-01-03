@@ -13,59 +13,59 @@ erDiagram
     user_profiles ||--o{ friends_receiver : "receives requests"
 
     auth_users {
-        uuid id PK
+        uuid id "PK"
         text email
         text encrypted_password
         timestamptz created_at
     }
 
     user_profiles {
-        uuid user_id PK,FK
-        text username UK,NN
+        uuid user_id "PK, FK"
+        text username "UNIQUE, NOT NULL"
         text display_name
         timestamptz created_at
         timestamptz updated_at
     }
 
     habits {
-        bigserial id PK
-        uuid user_id FK,NN
-        text name NN
+        bigserial id "PK"
+        uuid user_id "FK, NOT NULL"
+        text name "NOT NULL"
         text description
         timestamptz created_at
         boolean archived
     }
 
     habit_logs {
-        bigserial id PK
-        bigint habit_id FK,NN
-        uuid user_id FK,NN
-        date date NN
-        integer value NN
+        bigserial id "PK"
+        bigint habit_id "FK, NOT NULL"
+        uuid user_id "FK, NOT NULL"
+        date date "NOT NULL"
+        integer value "NOT NULL"
         timestamptz created_at
     }
 
     habit_stats {
-        bigint habit_id PK,FK
-        uuid user_id PK,FK
-        integer total_completions NN
-        integer current_streak NN
-        integer longest_streak NN
+        bigint habit_id "PK, FK"
+        uuid user_id "PK, FK"
+        integer total_completions "NOT NULL"
+        integer current_streak "NOT NULL"
+        integer longest_streak "NOT NULL"
         date last_completed_date
     }
 
     friends_sender {
-        uuid user_id PK,FK
-        uuid friend_id PK,FK
-        text status NN
+        uuid user_id "PK, FK"
+        uuid friend_id "PK, FK"
+        text status "NOT NULL"
         timestamptz created_at
         timestamptz updated_at
     }
 
     friends_receiver {
-        uuid user_id PK,FK
-        uuid friend_id PK,FK
-        text status NN
+        uuid user_id "PK, FK"
+        uuid friend_id "PK, FK"
+        text status "NOT NULL"
         timestamptz created_at
         timestamptz updated_at
     }

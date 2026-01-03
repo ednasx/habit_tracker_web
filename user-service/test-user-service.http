@@ -1,0 +1,120 @@
+# User Service API Testing Script
+# Use with REST Client extension in VS Code or any HTTP client
+
+@baseUrl = http://localhost:4001/api
+@token = YOUR_JWT_TOKEN_HERE
+
+### Health Check (No Auth Required)
+GET {{baseUrl}}/health
+
+### Get Metrics (No Auth Required)
+GET http://localhost:4001/metrics
+
+###
+### USER PROFILE ENDPOINTS
+###
+
+### 1. Get Current User Profile
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{token}}
+
+### 2. Create/Update User Profile
+POST {{baseUrl}}/users/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "test_user_123",
+  "display_name": "Test User"
+}
+
+### 3. Search Users by Username
+GET {{baseUrl}}/users/search?q=test
+Authorization: Bearer {{token}}
+
+###
+### FRIEND MANAGEMENT ENDPOINTS
+###
+
+### 4. Get Accepted Friends List
+GET {{baseUrl}}/users/friends
+Authorization: Bearer {{token}}
+
+### 5. Get Pending Friend Requests (Received)
+GET {{baseUrl}}/users/friends/pending
+Authorization: Bearer {{token}}
+
+### 6. Get Sent Friend Requests
+GET {{baseUrl}}/users/friends/sent
+Authorization: Bearer {{token}}
+
+### 7. Send Friend Request
+POST {{baseUrl}}/users/friends/request
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "another_user"
+}
+
+### 8. Accept Friend Request
+# Replace FRIEND_USER_ID with actual UUID
+POST {{baseUrl}}/users/friends/FRIEND_USER_ID/accept
+Authorization: Bearer {{token}}
+
+### 9. Reject Friend Request
+# Replace FRIEND_USER_ID with actual UUID
+POST {{baseUrl}}/users/friends/FRIEND_USER_ID/reject
+Authorization: Bearer {{token}}
+
+### 10. Remove Friend
+# Replace FRIEND_USER_ID with actual UUID
+DELETE {{baseUrl}}/users/friends/FRIEND_USER_ID
+Authorization: Bearer {{token}}
+
+###
+### ERROR TESTING
+###
+
+### Test 1: Missing Auth Token (Should return 401)
+GET {{baseUrl}}/users/profile
+
+### Test 2: Invalid Auth Token (Should return 401)
+GET {{baseUrl}}/users/profile
+Authorization: Bearer invalid_token_here
+
+### Test 3: Invalid Username (Should return 400)
+POST {{baseUrl}}/users/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "ab",
+  "display_name": "Too Short"
+}
+
+### Test 4: Invalid Username Format (Should return 400)
+POST {{baseUrl}}/users/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "User With Spaces",
+  "display_name": "Invalid Format"
+}
+
+### Test 5: Search Without Query (Should return 400)
+GET {{baseUrl}}/users/search
+Authorization: Bearer {{token}}
+
+### Test 6: Add Yourself as Friend (Should return 400)
+# Replace YOUR_USER_ID with your actual UUID
+POST {{baseUrl}}/users/friends/YOUR_USER_ID/accept
+Authorization: Bearer {{token}}
+
+###
+### SWAGGER UI
+###
+# Open in browser:
+# http://localhost:4001/api/docs
+
