@@ -89,23 +89,24 @@ If the repository is private, add these instructors as collaborators:
 
 ### Diagrams
 
-The `/diagrams` folder contains placeholder `.txt` files with detailed instructions for creating each diagram. The actual PNG files need to be generated using the instructions provided.
+The `/diagrams` folder contains **Mermaid diagrams** in Markdown format (`.md` files). These diagrams render automatically on GitHub - no need to generate PNG files!
 
-**Quick Start for Diagrams:**
-1. Read `diagrams/README.md` for overview
-2. For each diagram, read the corresponding `.txt` file (e.g., `microservices.png.txt`)
-3. Use the recommended tools (draw.io, dbdiagram.io, Mermaid Live Editor)
-4. Follow the instructions to create the PNG files
-5. Replace the `.txt` files with actual `.png` files
+**Available Diagrams:**
+1. `microservices.md` - Complete microservices architecture
+2. `cicd.md` - CI/CD pipeline flow with GitOps
+3. `security-flow.md` - Security model with sequence diagram
+4. `monitoring.md` - Monitoring and observability setup
+5. `erd.md` - Database entity relationship diagram
 
-**Easiest Approach:**
-- For `microservices.png`: Convert existing Mermaid diagram from `docs/architecture/C4/container_diagram.md` using https://mermaid.live/
-- For `erd.png`: Use https://dbdiagram.io/ with the DBML code provided in `erd.png.txt`
-- For other diagrams: Use https://app.diagrams.net/ (draw.io)
+**How to View:**
+- **On GitHub:** Just open the `.md` files - they render automatically
+- **Locally:** Install "Markdown Preview Mermaid Support" VS Code extension
+- **Online:** Copy code to https://mermaid.live/ for preview
 
 ### What's Complete
 
 ✅ **All Documentation Files** - Comprehensive documentation for all aspects  
+✅ **All Diagrams** - 5 Mermaid diagrams in Markdown format  
 ✅ **Motivation** - Justification as a dynamic web system  
 ✅ **Architecture** - Detailed microservices architecture  
 ✅ **CI/CD & GitOps** - Complete pipeline documentation  
@@ -113,9 +114,9 @@ The `/diagrams` folder contains placeholder `.txt` files with detailed instructi
 ✅ **Observability** - Monitoring, metrics, logs (traces not implemented)  
 ✅ **Database Schema** - Complete schema with RLS policies  
 
-### What Needs to Be Done
+### Ready for Submission
 
-⚠️ **Diagrams** - Need to be generated from the provided instructions (5 diagrams)
+🎉 **All requirements met!** The Report folder is complete and ready for submission.
 
 **Last Updated:** January 3, 2026
 
