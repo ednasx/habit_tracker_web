@@ -9,8 +9,8 @@ metadata:
     prometheus.io/path: "/metrics"
 spec:
   selector:
-    app: habit-service
+    app: habit-service #This is the selector. The selector looks for any pods in the cluster that have the label 'app:habit-service' and sends traffic to them.
   ports:
-    - port: 4000
+    - port: 4000 #This is the port that the service will listen on. This is the 'internal phone extension'. Other apps inside the clsuter will reach this service at http://habit-service:4000.
       targetPort: {{ .Values.habitService.port }}
       protocol: TCP

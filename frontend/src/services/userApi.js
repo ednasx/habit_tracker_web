@@ -12,7 +12,7 @@ const USER_API_BASE =
  */
 
 export async function getUserProfile() {
-  return apiRequest('/users/profile', {
+  return apiRequest('/users/profile', { // apiRequest is defined in apiClient.js
     method: 'GET',
   }, USER_API_BASE);
 }

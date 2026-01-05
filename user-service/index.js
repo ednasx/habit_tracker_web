@@ -32,9 +32,19 @@ try {
 const app = express()
 const PORT = process.env.PORT || 4001
 
+// CORS configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production'
+    ? 'https://habit-tracker.ltu-m7011e-8.se'  // Production: only allow your domain
+    : ['http://localhost:5173', 'http://localhost:3000'], // Development: allow localhost
+  credentials: true, // Allow cookies/auth headers
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}
+
 app.use(metricsMiddleware)
 app.use(helmet())
-app.use(cors())
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // Swagger UI (only if spec loaded)

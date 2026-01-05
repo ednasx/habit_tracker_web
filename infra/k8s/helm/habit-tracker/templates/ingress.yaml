@@ -6,9 +6,9 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
-    - hosts:
+    - hosts: #The hosts are the domains that the ingress will listen on.
         - habit-tracker.ltu-m7011e-8.se
-      secretName: habit-tls
+      secretName: habit-tls #The secretName is the name of the secret that contains the TLS certificate and key.
   rules:
     - host: habit-tracker.ltu-m7011e-8.se
       http:

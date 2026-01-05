@@ -550,6 +550,46 @@ app.use(helmet())  // Sets security headers:
 // - Content-Security-Policy (if configured)
 ```
 
+### 5.4 CORS Configuration
+
+**Cross-Origin Resource Sharing (CORS):**
+
+CORS is configured to restrict API access to authorized origins only.
+
+**Production Configuration:**
+```javascript
+const corsOptions = {
+  origin: 'https://habit-tracker.ltu-m7011e-8.se',  // Only production domain
+  credentials: true,  // Allow cookies/auth headers
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}
+
+app.use(cors(corsOptions))
+```
+
+**Development Configuration:**
+```javascript
+const corsOptions = {
+  origin: ['http://localhost:5173', 'http://localhost:3000'],  // Localhost allowed
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}
+```
+
+**Security Benefits:**
+- Prevents unauthorized websites from calling your APIs
+- Blocks cross-site request forgery (CSRF) attacks
+- Only your frontend domain can access backend services
+- Environment-based configuration (different for dev/prod)
+
+**Implementation:**
+- Both `habit-service` and `user-service` use the same CORS configuration
+- Configuration switches based on `NODE_ENV` environment variable
+- Production: Only `https://habit-tracker.ltu-m7011e-8.se` allowed
+- Development: Localhost origins allowed for local testing
+
 ---
 
 ## 6. Secrets Management
@@ -626,6 +666,7 @@ spec:
 ✅ **Input Validation** - Server-side validation of all inputs  
 ✅ **SQL Injection Protection** - Parameterized queries only  
 ✅ **XSS Protection** - React auto-escaping + security headers  
+✅ **CORS Configuration** - Production CORS restricts origins to authorized domain  
 ✅ **Secrets Management** - No secrets in Git  
 ✅ **Principle of Least Privilege** - Services have minimal permissions  
 ✅ **Defense in Depth** - Multiple security layers  
@@ -638,7 +679,6 @@ spec:
 ### 8.1 Current Limitations
 
 ⚠️ **Rate Limiting:** Not implemented - vulnerable to brute force attacks  
-⚠️ **CORS Configuration:** Currently allows all origins (development)  
 ⚠️ **Content Security Policy:** Not fully configured  
 ⚠️ **Dependency Scanning:** No automated vulnerability scanning  
 ⚠️ **Image Scanning:** Docker images not scanned for vulnerabilities  
@@ -655,14 +695,6 @@ const limiter = rateLimit({
 })
 
 app.use('/api/', limiter)
-```
-
-**CORS Configuration:**
-```javascript
-app.use(cors({
-  origin: 'https://habit-tracker.ltu-m7011e-8.se',
-  credentials: true
-}))
 ```
 
 **Dependency Scanning:**

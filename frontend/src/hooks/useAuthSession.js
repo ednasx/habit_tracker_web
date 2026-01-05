@@ -28,11 +28,12 @@ export function useAuthSession() {
         }
 
         const { data: listener } = supabase.auth.onAuthStateChange(
-          (_event, newSession) => {
+          (_event, newSession) => { // supabase calls this automatically when supabase interanlly updates its session state. 
             setSession(newSession)
             setAuthToken(newSession?.access_token ?? null)
           }
         )
+        //onAuthStateChange registers a listener. The arrow function is the callback. Supabase calls the callback arrow function when the auth state changes.
 
         subscription = listener?.subscription
       } finally {
