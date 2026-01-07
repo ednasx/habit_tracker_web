@@ -1,7 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import request from 'supertest'
-import app from '../index.js'
+import request from 'supertest' // supertest is a library for testing HTTP requests. It allows you to test your API endpoints as if you were a user.
+import { generateTestToken, setupTestAuth } from './testHelpers.js'
+
+// Set up test JWT secret before importing app
+setupTestAuth()
+
+// Import app after setting up test auth
+const { default: app } = await import('../index.js')
 
 // ============================================================================
 // REQ7: Failure Test Cases for user-service
@@ -9,6 +15,9 @@ import app from '../index.js'
 // ============================================================================
 
 // --- Unauthorized Access Tests (401) ---
+// These tests act as a 'security net'. If a developer accidentally removes the
+// authentication middleware, these tests will fail immediately, preventing a
+// security breach before the code goes live.
 
 test('GET /api/users/profile returns 401 without Authorization header', async () => {
   const res = await request(app).get('/api/users/profile')
@@ -28,45 +37,6 @@ test('GET /api/users/search returns 401 without Authorization header', async () 
   assert.equal(res.body.message, 'Missing Authorization header')
 })
 
-// --- Validation Error Tests (400) ---
-
-test('POST /api/users/profile returns 400 when username is missing', async () => {
-  const res = await request(app)
-    .post('/api/users/profile')
-    .send({})
-
-  // Will return 401 first (no auth), which is expected in CI without JWT secret
-  // Both 400 and 401 are valid failure scenarios for this test
-  assert.ok(
-    res.status === 400 || res.status === 401,
-    `Expected 400 or 401, got ${res.status}`
-  )
-})
-
-test('GET /api/users/search returns 400 when query parameter q is missing', async () => {
-  const res = await request(app)
-    .get('/api/users/search')
-    // No q parameter provided
-
-  // Will return 401 first (no auth)
-  assert.ok(
-    res.status === 400 || res.status === 401,
-    `Expected 400 or 401, got ${res.status}`
-  )
-})
-
-test('POST /api/users/friends/request returns 400 when username is missing in body', async () => {
-  const res = await request(app)
-    .post('/api/users/friends/request')
-    .send({})
-
-  // Will return 401 first (no auth)
-  assert.ok(
-    res.status === 400 || res.status === 401,
-    `Expected 400 or 401, got ${res.status}`
-  )
-})
-
 test('POST /api/users/friends/:friendId/accept returns 401 without auth', async () => {
   const res = await request(app)
     .post('/api/users/friends/invalid-uuid/accept')
@@ -84,3 +54,39 @@ test('DELETE /api/users/friends/:friendId returns 401 without auth', async () =>
   assert.equal(res.body.message, 'Missing Authorization header')
 })
 
+// --- Validation Error Tests (400) ---
+// These tests use a valid JWT token to bypass authentication and test
+// validation logic directly.
+
+test('POST /api/users/profile returns 400 when username is missing', async () => {
+  const token = generateTestToken()
+
+  const res = await request(app)
+    .post('/api/users/profile')
+    .set('Authorization', `Bearer ${token}`)
+    .send({})
+
+  assert.equal(res.status, 400, `Expected 400 for missing username, got ${res.status}`)
+})
+
+test('GET /api/users/search returns 400 when query parameter q is missing', async () => {
+  const token = generateTestToken()
+
+  const res = await request(app)
+    .get('/api/users/search')
+    .set('Authorization', `Bearer ${token}`)
+    // No q parameter provided
+
+  assert.equal(res.status, 400, `Expected 400 for missing query parameter, got ${res.status}`)
+})
+
+test('POST /api/users/friends/request returns 400 when username is missing in body', async () => {
+  const token = generateTestToken()
+
+  const res = await request(app)
+    .post('/api/users/friends/request')
+    .set('Authorization', `Bearer ${token}`)
+    .send({})
+
+  assert.equal(res.status, 400, `Expected 400 for missing username in body, got ${res.status}`)
+})
