@@ -1,7 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import request from 'supertest'
-import app from '../index.js'
+import { generateTestToken, setupTestAuth } from './testHelpers.js'
+
+// Set up test JWT secret before importing app
+setupTestAuth()
+
+// Import app after setting up test auth
+const { default: app } = await import('../index.js')
 
 test('GET /api/habits returns 401 without Authorization header', async () => {
   const res = await request(app).get('/api/habits')
@@ -10,15 +16,13 @@ test('GET /api/habits returns 401 without Authorization header', async () => {
 })
 
 test('POST /api/habits returns 400 when name is missing', async () => {
+  const token = generateTestToken()
+
   const res = await request(app)
     .post('/api/habits')
-    // NOTE: no Authorization header here, to avoid SUPABASE_JWT_SECRET usage
+    .set('Authorization', `Bearer ${token}`)
     .send({})
 
-  // In practice, this will be 401 in CI (unauthorized).
-  // We still accept 400 as a valid "validation error" outcome.
-  assert.ok(
-    res.status === 400 || res.status === 401,
-    `Expected 400 or 401, got ${res.status}`
-  )
+  assert.equal(res.status, 400, `Expected 400 for missing name, got ${res.status}`)
+  assert.ok(res.body.message.includes('name is required'), 'Error message should mention name is required')
 })
