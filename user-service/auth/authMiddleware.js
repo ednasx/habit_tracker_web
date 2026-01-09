@@ -30,7 +30,7 @@ export async function requireAuth(req, res, next) {
       ...decoded,
     }
 
-    return next()
+    return next() //call next() to proceed to the next middleware or route handler
   } catch (err) {
     console.error('[Auth] JWT verification failed:', err.message)
     return res.status(401).json({ message: 'Invalid or expired token' })
