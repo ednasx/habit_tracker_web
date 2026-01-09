@@ -64,13 +64,13 @@ export function useHabitsController(session) {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE', // Listen for updates (when analytics-service writes new stats)
+          event: '*', // Listen for INSERT (first completion) and UPDATE (subsequent completions)
           schema: 'public',
           table: 'habit_stats',
           filter: `user_id=eq.${userId}`,
         },
         async (payload) => {
-          console.log('[Realtime] Stats updated by analytics-service:', payload.new)
+          console.log('[Realtime] Stats changed by analytics-service:', payload.eventType, payload.new)
           // Refresh habits to get updated streaks and totals
           await loadHabits()
         }

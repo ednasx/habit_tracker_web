@@ -1,6 +1,8 @@
 // frontend/src/components/Leaderboard.jsx
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { getFriendsLeaderboard } from '../services/habitsApi'
+import { useAuthSession } from '../hooks/useAuthSession'
+import { supabase } from '../lib/supabaseClient'
 
 function getInitials(label = '') {
   const parts = label.split(' ').filter(Boolean)
@@ -20,23 +22,74 @@ function Leaderboard() {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { session } = useAuthSession()
+  
+  // Use a ref to store friend user IDs so the subscription callback always has the latest list
+  const friendUserIdsRef = useRef(new Set())
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await getFriendsLeaderboard(10)
-        setEntries(Array.isArray(data) ? data : [])
-      } catch (err) {
-        console.error('[Leaderboard] Error loading leaderboard:', err)
-        setError(err.message || 'Failed to load leaderboard')
-      } finally {
-        setLoading(false)
-      }
+  // Reusable loader function
+  const loadLeaderboard = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getFriendsLeaderboard(10)
+      const leaderboardEntries = Array.isArray(data) ? data : []
+      setEntries(leaderboardEntries)
+      
+      // Update the ref with current friend IDs (including self)
+      friendUserIdsRef.current = new Set(leaderboardEntries.map((e) => e.user_id))
+    } catch (err) {
+      console.error('[Leaderboard] Error loading leaderboard:', err)
+      setError(err.message || 'Failed to load leaderboard')
+    } finally {
+      setLoading(false)
     }
-    load()
   }, [])
+
+  // Initial load
+  useEffect(() => {
+    loadLeaderboard()
+  }, [loadLeaderboard])
+
+  // --- Realtime subscription: refresh when habit_stats are updated for any friend ---
+  useEffect(() => {
+    const userId = session?.user?.id
+    if (!userId) return
+
+    console.log('[Leaderboard] Setting up real-time subscription for habit_stats updates')
+
+    const leaderboardChannel = supabase
+      .channel(`leaderboard-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen for INSERT (first completion) and UPDATE (subsequent completions)
+          schema: 'public',
+          table: 'habit_stats',
+          // Note: Supabase real-time doesn't support IN filters for multiple user IDs,
+          // so we subscribe to all changes and filter in the callback
+        },
+        async (payload) => {
+          const updatedUserId = payload.new?.user_id
+          
+          // Only refresh if the change is for one of our friends (including self)
+          // Use the ref to get the latest friend IDs without recreating the subscription
+          if (updatedUserId && friendUserIdsRef.current.has(updatedUserId)) {
+            console.log('[Leaderboard] Stats changed for friend:', updatedUserId, payload.eventType, payload.new)
+            // Refresh leaderboard to get updated rankings
+            await loadLeaderboard()
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Leaderboard] habit_stats channel status:', status)
+      })
+
+    // Cleanup when session changes or component unmounts
+    return () => {
+      supabase.removeChannel(leaderboardChannel)
+    }
+  }, [session, loadLeaderboard])
 
   if (loading) {
     return (
