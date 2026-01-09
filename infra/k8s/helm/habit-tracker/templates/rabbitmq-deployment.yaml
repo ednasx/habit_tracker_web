@@ -1,3 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-rabbitmq-plugins
+  namespace: {{ .Values.namespace }}
+data:
+  enabled_plugins: |
+    [rabbitmq_management,rabbitmq_prometheus].
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,8 +32,6 @@ spec:
               value: {{ .Values.rabbitmq.username | quote }}
             - name: RABBITMQ_DEFAULT_PASS
               value: {{ .Values.rabbitmq.password | quote }}
-            - name: RABBITMQ_ENABLED_PLUGINS
-              value: "rabbitmq_management,rabbitmq_prometheus"
           ports:
             - containerPort: 5672
             - containerPort: 15672
@@ -32,10 +39,16 @@ spec:
           volumeMounts:
             - name: rabbitmq-data
               mountPath: /var/lib/rabbitmq
+            - name: rabbitmq-plugins
+              mountPath: /etc/rabbitmq/enabled_plugins
+              subPath: enabled_plugins
       volumes:                             
         - name: rabbitmq-data
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-rabbitmq-pvc
+        - name: rabbitmq-plugins
+          configMap:
+            name: {{ .Release.Name }}-rabbitmq-plugins
 ---
 apiVersion: v1
 kind: Service
