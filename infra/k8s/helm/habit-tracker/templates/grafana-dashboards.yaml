@@ -21,7 +21,7 @@ data:
         {
           "id": 1,
           "title": "Request Rate (req/s)",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
           "targets": [
             {
@@ -34,7 +34,7 @@ data:
         {
           "id": 2,
           "title": "Error Rate (%)",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
           "targets": [
             {
@@ -56,7 +56,7 @@ data:
         {
           "id": 3,
           "title": "Response Time (p95)",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
           "targets": [
             {
@@ -73,7 +73,7 @@ data:
         {
           "id": 4,
           "title": "RabbitMQ Queue Depth",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
           "targets": [
             {
@@ -86,7 +86,7 @@ data:
         {
           "id": 5,
           "title": "Pod CPU Usage",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
           "targets": [
             {
@@ -99,7 +99,7 @@ data:
         {
           "id": 6,
           "title": "Pod Memory Usage",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
           "targets": [
             {
@@ -128,7 +128,7 @@ data:
         {
           "id": 1,
           "title": "Request Rate by Endpoint",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8},
           "targets": [
             {
@@ -140,7 +140,7 @@ data:
         {
           "id": 2,
           "title": "Response Time by Endpoint (p95)",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8},
           "targets": [
             {
@@ -163,7 +163,7 @@ data:
         {
           "id": 4,
           "title": "Habit Completions (Rate)",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 8, "y": 16, "w": 16, "h": 8},
           "targets": [
             {
@@ -191,7 +191,7 @@ data:
         {
           "id": 1,
           "title": "Queue Depth",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
           "targets": [
             {
@@ -207,7 +207,7 @@ data:
         {
           "id": 2,
           "title": "Message Rate (msg/s)",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
           "targets": [
             {
@@ -223,7 +223,7 @@ data:
         {
           "id": 3,
           "title": "Message Processing Time",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 0, "y": 8, "w": 24, "h": 8},
           "targets": [
             {
@@ -246,7 +246,7 @@ data:
         {
           "id": 5,
           "title": "Failed Messages",
-          "type": "graph",
+          "type": "timeseries",
           "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
           "targets": [
             {
